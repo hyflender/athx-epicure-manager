@@ -1,0 +1,101 @@
+﻿<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ATHX Epicure - Épreuves</title>
+    <link rel="stylesheet" href="./assets/css/styles.css" />
+    <style>
+      .zone-scored td:first-child     { border-left: 3px solid var(--gold); }
+      .zone-transition td:first-child { border-left: 3px solid rgba(0,0,0,.12); }
+      .zone-transition                { opacity: .65; }
+      .badge {
+        display: inline-block;
+        font-size: 10px;
+        font-family: var(--mono);
+        padding: 1px 6px;
+        border-radius: 3px;
+        letter-spacing: .05em;
+      }
+      .badge-scored { background: rgba(245,192,48,.18); color: var(--gold); border: 1px solid rgba(245,192,48,.35); }
+      .badge-free   { background: rgba(0,0,0,.06); color: var(--muted); border: 1px solid rgba(0,0,0,.1); }
+      .badge-up     { color: #1a7a48; font-size: 11px; }
+      .badge-down   { color: #c0392b; font-size: 11px; }
+      .notes-cell   { font-size: 11px; color: var(--muted); max-width: 380px; line-height: 1.6; }
+      table.zones th,
+      table.zones td { padding: 9px 12px; vertical-align: top; }
+      .zone-num { font-weight: 700; color: var(--gold); font-size: 17px; }
+    </style>
+  </head>
+  <body>
+    <header><h1>ATHX · Epicure</h1><nav class="menu">
+        <a href="./index.html">Accueil</a>
+        <a href="./tv.html" target="_blank" rel="noopener noreferrer">📺 Dashboard TV</a>
+        <a href="./equipes.html">Équipes</a>
+        <a href="./planning.html">Planning heats</a>
+        <a class="active" href="./epreuves.html">Épreuves</a>
+        <a href="./scores.html">Saisie scores</a>
+        <a href="./classement.html">Classement</a>
+        <a href="./resultats.html">Résultats Live</a>
+        <a href="./ops.html">Ops</a>
+      </nav>
+    </header>
+    <main>
+      <section class="card">
+        <h2>Structure de la compétition</h2>
+        <p class="muted" style="font-size:12px;margin-bottom:16px">
+          Zones <span class="badge badge-scored">SCORE</span> contribuent au classement par système de rangs (somme des rangs — le plus bas gagne).
+        </p>
+        <div style="overflow-x:auto">
+          <table class="zones">
+            <thead>
+              <tr>
+                <th style="width:50px">Zone</th>
+                <th style="width:160px">Nom</th>
+                <th style="width:72px">Durée</th>
+                <th style="width:72px">Time cap</th>
+                <th style="width:150px">Score</th>
+                <th>Détails</th>
+              </tr>
+            </thead>
+            <tbody id="event-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script src="./assets/js/data.js"></script>
+    <script>
+      const tbody = document.querySelector("#event-tbody");
+
+      function render() {
+        const state  = AthxStore.loadState();
+        const events = [...state.events].sort((a, b) => a.order - b.order);
+        tbody.innerHTML = "";
+        events.forEach((ev) => {
+          const tr = document.createElement("tr");
+          tr.className = `zone-row ${ev.scored ? "zone-scored" : "zone-transition"}`;
+          const scoreBadge = ev.scored
+            ? `<span class="badge badge-scored">SCORE</span>
+               <span style="margin-left:5px">${ev.higherIsBetter
+                 ? '<span class="badge-up">▲ max</span>'
+                 : '<span class="badge-down">▼ min</span>'}</span>
+               <br><span style="font-size:11px;color:var(--muted)">${ev.scoreFormat}</span>`
+            : `<span class="badge badge-free">transition</span>`;
+          tr.innerHTML = `
+            <td class="zone-num">${ev.zone}</td>
+            <td style="font-weight:600">${ev.name}</td>
+            <td>${ev.durationMinutes ? `${ev.durationMinutes} min` : "—"}</td>
+            <td>${ev.timeCapMinutes ? `${ev.timeCapMinutes} min` : "—"}</td>
+            <td>${scoreBadge}</td>
+            <td class="notes-cell">${ev.notes || "—"}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      AthxStore.whenCloudReady()
+        .then(() => render())
+        .catch((err) => alert(`Cloud indisponible: ${err.message || err}`));
+    </script>
+  </body>
+</html>

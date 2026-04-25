@@ -1,0 +1,368 @@
+﻿<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ATHX Epicure - Planning Heats</title>
+    <link rel="stylesheet" href="./assets/css/styles.css" />
+    <style>
+      /* ── Table ─────────────────────────────────────────────────── */
+      .planning-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      .planning-table th, .planning-table td { padding: 7px 10px; white-space: nowrap; }
+      .planning-table th { font-size: 11px; font-family: var(--mono); text-align: center; }
+      .planning-table td { text-align: center; }
+      .planning-table td.athlete-name { text-align: left; font-weight: 600; }
+      .planning-table td.athlete-cat  { text-align: left; }
+
+      /* ── Heat header ───────────────────────────────────────────── */
+      .heat-header td {
+        background: rgba(245,192,48,.08);
+        color: var(--gold);
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: .07em;
+        padding: 5px 10px;
+        border-top: 1px solid rgba(245,192,48,.2);
+        text-align: left;
+      }
+      .heat-header.heat-past   td { opacity: .4; }
+      .heat-header.heat-active td { background: rgba(245,192,48,.18); border-top-color: var(--gold); }
+      .heat-header.heat-next   td { background: rgba(245,192,48,.05); }
+
+      /* ── Athlete rows ──────────────────────────────────────────── */
+      tr.athlete-past   { opacity: .35; }
+      tr.athlete-active { background: rgba(245,192,48,.04); }
+
+      /* ── Zone cells ────────────────────────────────────────────── */
+      .zone-time { font-family: var(--mono); font-size: 12px; }
+
+      td.z-past    { color: var(--muted) !important; opacity: .45; }
+      td.z-active  {
+        color: var(--gold) !important;
+        font-weight: 700;
+        background: rgba(245,192,48,.12);
+        border-radius: 4px;
+      }
+      td.z-soon    {
+        color: #f5a623 !important;
+        font-weight: 700;
+        background: rgba(245,166,35,.08);
+      }
+      td.z-future  { color: var(--foreground); }
+
+      /* Clignotement pour la zone active */
+      @keyframes pulse-glow {
+        0%, 100% { box-shadow: inset 0 0 0 1px rgba(245,192,48,.5); }
+        50%       { box-shadow: inset 0 0 0 2px rgba(245,192,48,.9), 0 0 8px rgba(245,192,48,.3); }
+      }
+      td.z-active { animation: pulse-glow 1.6s ease-in-out infinite; }
+
+      /* ── Badges ────────────────────────────────────────────────── */
+      .cat-badge {
+        display: inline-block;
+        font-size: 10px;
+        font-family: var(--mono);
+        padding: 1px 5px;
+        border-radius: 3px;
+        border: 1px solid rgba(0,0,0,.12);
+        color: var(--muted);
+      }
+      .cat-Lite { border-color: rgba(111,207,151,.4); color: #1a7a48; }
+      .cat-ATHX { border-color: rgba(245,192,48,.4);  color: var(--gold); }
+      .cat-Pro  { border-color: rgba(235,87,87,.4);   color: #c0392b; }
+
+      /* ── Zone header cols ──────────────────────────────────────── */
+      .zone-scored-col   { color: var(--gold); }
+      .zone-free-col     { color: var(--muted); }
+      th.zh-active       { color: var(--gold) !important; font-weight: 700; border-bottom: 2px solid var(--gold); }
+
+      /* ── Status bar ────────────────────────────────────────────── */
+      #live-status {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      #live-status .dot-live {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: #6fcf97;
+        animation: pulse-dot 1.2s ease-in-out infinite;
+        display: inline-block;
+      }
+      @keyframes pulse-dot {
+        0%,100% { opacity: 1; transform: scale(1); }
+        50%      { opacity: .4; transform: scale(.7); }
+      }
+      .next-up {
+        background: rgba(245,166,35,.12);
+        border: 1px solid rgba(245,166,35,.3);
+        border-radius: 5px;
+        padding: 3px 10px;
+        color: #f5a623;
+        font-weight: 700;
+      }
+
+      /* ── Misc ──────────────────────────────────────────────────── */
+      .summary-grid {
+        display: flex; gap: 16px; flex-wrap: wrap;
+        font-size: 12px; color: var(--muted); font-family: var(--mono); margin-bottom: 8px;
+      }
+      .summary-grid span strong { color: var(--foreground); }
+      .zone-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; font-family: var(--mono); margin-bottom: 14px; }
+      .zone-legend-item { display: flex; align-items: center; gap: 5px; }
+      .zone-dot         { width: 8px; height: 8px; border-radius: 50%; }
+      .zone-dot-scored     { background: var(--gold); }
+      .zone-dot-transition { background: rgba(0,0,0,.2); }
+    </style>
+  </head>
+  <body>
+    <header><h1>ATHX · Epicure</h1><nav class="menu">
+        <a href="./index.html">Accueil</a>
+        <a href="./tv.html" target="_blank" rel="noopener noreferrer">📺 Dashboard TV</a>
+        <a href="./equipes.html">Équipes</a>
+        <a class="active" href="./planning.html">Planning heats</a>
+        <a href="./epreuves.html">Épreuves</a>
+        <a href="./scores.html">Saisie scores</a>
+        <a href="./classement.html">Classement</a>
+        <a href="./resultats.html">Résultats Live</a>
+        <a href="./ops.html">Ops</a>
+      </nav>
+    </header>
+    <main>
+      <section class="card">
+        <div class="summary-grid">
+          <span>Départ toutes les <strong id="interval">—</strong> min</span>
+          <span><strong id="per-heat">—</strong> athlètes / heat</span>
+          <span>Premier départ : <strong id="start-time">—</strong></span>
+          <span><strong id="heat-count">—</strong> heats au total</span>
+        </div>
+        <div id="live-status">
+          <span><span class="dot-live"></span> Temps réel</span>
+          <span id="clock">—</span>
+          <span id="next-up-label"></span>
+        </div>
+        <div class="zone-legend" id="zone-legend"></div>
+        <div style="overflow-x:auto">
+          <table class="planning-table">
+            <thead id="planning-head"></thead>
+            <tbody id="planning-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script src="./assets/js/data.js"></script>
+    <script>
+      const thead       = document.querySelector("#planning-head");
+      const tbody       = document.querySelector("#planning-tbody");
+      const legend      = document.querySelector("#zone-legend");
+      const clockEl     = document.querySelector("#clock");
+      const nextUpLabel = document.querySelector("#next-up-label");
+
+      const SOON_MINUTES = 5; // seuil "prochain départ imminent"
+
+      function parseHm(hm) {
+        const [h, m] = String(hm || "08:00").split(":").map(Number);
+        return (h || 0) * 60 + (m || 0);
+      }
+      function toHm(min) {
+        const h = Math.floor(min / 60) % 24;
+        const m = Math.floor(min) % 60;
+        return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+      }
+      function clockStr() {
+        const d = new Date();
+        return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`;
+      }
+      let _planningState = null;
+      function nowMinutes() {
+        return AthxStore.effectiveNowMin(_planningState);
+      }
+      function fmtCountdown(diffMin) {
+        const absMin = Math.abs(diffMin);
+        const m = Math.floor(absMin);
+        const s = Math.round((absMin - m) * 60);
+        return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+      }
+
+      // ── Données globales recalculées à chaque render ─────────────
+      let scheduleCache  = [];
+      let zonesCache     = [];
+      let offsetsCache   = [];
+
+      function buildData() {
+        const state    = AthxStore.loadState();
+        _planningState = state;
+        scheduleCache  = AthxStore.buildHeatSchedule(state);
+        zonesCache     = [...state.events].sort((a, b) => a.order - b.order);
+        offsetsCache   = [];
+        let cum = 0;
+        zonesCache.forEach((z) => { offsetsCache.push(cum); cum += (z.durationMinutes || 0); });
+
+        document.querySelector("#interval").textContent   = state.config.heatIntervalMinutes || 20;
+        document.querySelector("#per-heat").textContent   = state.config.athletesPerHeat || 2;
+        document.querySelector("#start-time").textContent = state.config.startTime || "08:00";
+        document.querySelector("#heat-count").textContent = scheduleCache.length;
+
+        legend.innerHTML = zonesCache.map((z) =>
+          `<span class="zone-legend-item">
+            <span class="zone-dot ${z.scored ? "zone-dot-scored" : "zone-dot-transition"}"></span>
+            <span style="color:${z.scored ? "var(--gold)" : "var(--muted)"}">Z${z.zone} ${z.name}</span>
+          </span>`
+        ).join("");
+      }
+
+      function buildTable() {
+        const zoneHeaders = zonesCache.map((z) =>
+          `<th id="zh-${z.id}" class="${z.scored ? "zone-scored-col" : "zone-free-col"}">
+            Z${z.zone}<br>${z.name.replace(" Zone","")}<br>
+            <span style="font-weight:400;opacity:.6">${z.durationMinutes}min</span>
+          </th>`
+        ).join("");
+        thead.innerHTML = `<tr>
+          <th style="text-align:left">Athlète</th>
+          <th style="text-align:left">Cat.</th>
+          <th>Heat</th>
+          ${zoneHeaders}
+        </tr>`;
+
+        tbody.innerHTML = "";
+        scheduleCache.forEach((heat) => {
+          const heatStart = parseHm(heat.startTime);
+          const heatEnd   = heatStart + offsetsCache[offsetsCache.length - 1] + (zonesCache[zonesCache.length - 1]?.durationMinutes || 0);
+
+          const heatTr = document.createElement("tr");
+          heatTr.className = "heat-header";
+          heatTr.dataset.heatStart = heatStart;
+          heatTr.dataset.heatEnd   = heatEnd;
+          heatTr.dataset.heatId    = heat.heat;
+          heatTr.innerHTML = `<td colspan="${3 + zonesCache.length}">
+            Heat ${heat.heat} — départ <strong>${heat.startTime}</strong>
+            &nbsp;·&nbsp; fin estimée ${toHm(heatEnd)}
+          </td>`;
+          tbody.appendChild(heatTr);
+
+          heat.athletes.forEach((athlete) => {
+            const name = `${athlete.lastName || ""} ${athlete.firstName || ""}`.trim() || athlete.name || "—";
+            const cat  = athlete.category || "—";
+            const gen  = athlete.gender   || "";
+
+            const zoneCells = zonesCache.map((z, i) => {
+              const zStart = heatStart + offsetsCache[i];
+              const zEnd   = zStart + (z.durationMinutes || 0);
+              return `<td class="zone-time ${z.scored ? "zone-scored-col-base" : ""}"
+                          data-zstart="${zStart}" data-zend="${zEnd}" data-zid="${z.id}">${toHm(zStart)}</td>`;
+            }).join("");
+
+            const tr = document.createElement("tr");
+            tr.className = "athlete-row";
+            tr.dataset.heatStart = heatStart;
+            tr.dataset.heatEnd   = heatEnd;
+            tr.innerHTML = `
+              <td class="athlete-name">${name}</td>
+              <td class="athlete-cat">
+                <span class="cat-badge cat-${cat}">${cat}</span>
+                <span style="font-size:11px;color:var(--muted);margin-left:3px">${gen}</span>
+              </td>
+              <td style="font-family:var(--mono);font-weight:700;color:var(--gold)">H${heat.heat}</td>
+              ${zoneCells}
+            `;
+            tbody.appendChild(tr);
+          });
+        });
+      }
+
+      // ── Mise à jour temps réel (chaque seconde) ──────────────────
+      function tick() {
+        const now = nowMinutes();
+        clockEl.textContent = clockStr();
+
+        // ── Trouver le prochain événement (zone start) ────────────
+        let nextEventMin = Infinity;
+        let nextEventLabel = "";
+
+        // ── Mettre à jour les classes ─────────────────────────────
+
+        // Heat headers
+        document.querySelectorAll("tr.heat-header").forEach((tr) => {
+          const hs = Number(tr.dataset.heatStart);
+          const he = Number(tr.dataset.heatEnd);
+          tr.classList.remove("heat-past","heat-active","heat-next");
+          if (now >= he)       tr.classList.add("heat-past");
+          else if (now >= hs)  tr.classList.add("heat-active");
+          else                 tr.classList.add("heat-next");
+        });
+
+        // Athlete rows
+        document.querySelectorAll("tr.athlete-row").forEach((tr) => {
+          const hs = Number(tr.dataset.heatStart);
+          const he = Number(tr.dataset.heatEnd);
+          tr.classList.remove("athlete-past","athlete-active");
+          if (now >= he)      tr.classList.add("athlete-past");
+          else if (now >= hs) tr.classList.add("athlete-active");
+        });
+
+        // Zone cells
+        document.querySelectorAll("td[data-zstart]").forEach((td) => {
+          const zs = Number(td.dataset.zstart);
+          const ze = Number(td.dataset.zend);
+          td.classList.remove("z-past","z-active","z-soon","z-future");
+          if (now >= ze) {
+            td.classList.add("z-past");
+          } else if (now >= zs) {
+            td.classList.add("z-active");
+          } else if (zs - now <= SOON_MINUTES) {
+            td.classList.add("z-soon");
+            if (zs < nextEventMin) { nextEventMin = zs; nextEventLabel = td.closest("tr")?.querySelector(".athlete-name")?.textContent; }
+          } else {
+            td.classList.add("z-future");
+          }
+        });
+
+        // Zone header columns — highlight si une cellule de cette col est active
+        zonesCache.forEach((z) => {
+          const th = document.querySelector(`#zh-${z.id}`);
+          if (!th) return;
+          const hasActive = document.querySelector(`td[data-zid="${z.id}"].z-active`);
+          th.classList.toggle("zh-active", !!hasActive);
+        });
+
+        // ── Label "prochain départ" ───────────────────────────────
+        if (nextEventMin < Infinity) {
+          const diff = nextEventMin - now;
+          nextUpLabel.innerHTML = `<span class="next-up">⚡ Prochain départ dans ${fmtCountdown(diff)}</span>`;
+        } else {
+          // Trouver la prochaine zone future la plus proche
+          let soonMin = Infinity;
+          document.querySelectorAll("td[data-zstart]").forEach((td) => {
+            const zs = Number(td.dataset.zstart);
+            if (zs > now && zs < soonMin) soonMin = zs;
+          });
+          if (soonMin < Infinity && soonMin - now <= 30) {
+            const diff = soonMin - now;
+            nextUpLabel.innerHTML = `<span class="next-up">⚡ Prochaine zone dans ${fmtCountdown(diff)}</span>`;
+          } else {
+            nextUpLabel.innerHTML = "";
+          }
+        }
+      }
+
+      let tickTimer = null;
+
+      function render() {
+        buildData();
+        buildTable();
+        tick();
+        if (tickTimer) clearInterval(tickTimer);
+        tickTimer = setInterval(tick, 1000);
+      }
+
+      AthxStore.whenCloudReady()
+        .then(() => render())
+        .catch((err) => alert(`Cloud indisponible: ${err.message || err}`));
+    </script>
+  </body>
+</html>

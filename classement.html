@@ -1,0 +1,183 @@
+﻿<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ATHX Epicure - Classement</title>
+    <link rel="stylesheet" href="./assets/css/styles.css" />
+    <style>
+      .ranking-table { width: 100%; border-collapse: collapse; }
+      .ranking-table th, .ranking-table td { padding: 8px 10px; }
+      .ranking-table th { text-align: left; font-size: 12px; font-family: var(--mono); }
+
+      .cat-header td {
+        background: rgba(245,192,48,.1);
+        color: var(--gold);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        padding: 6px 10px;
+        border-top: 1px solid rgba(245,192,48,.3);
+      }
+      .rank-1 td:first-child { color: #f5c030; font-size: 18px; }
+      .rank-2 td:first-child { color: #c0c0c0; font-size: 15px; }
+      .rank-3 td:first-child { color: #cd7f32; font-size: 14px; }
+
+      .rank-cell {
+        font-family: var(--mono);
+        font-size: 12px;
+        text-align: center;
+        color: var(--muted);
+      }
+      .rank-cell.has-rank { color: var(--foreground); }
+      .rank-cell.rank-best { color: var(--gold); font-weight: 700; }
+
+      .total-cell {
+        font-family: var(--mono);
+        font-weight: 700;
+        font-size: 15px;
+        color: var(--gold);
+      }
+      .no-score { color: var(--muted); font-size: 12px; }
+      .legend {
+        font-size: 11px;
+        color: var(--muted);
+        font-family: var(--mono);
+        margin-bottom: 14px;
+        line-height: 1.7;
+      }
+      .perf-sub {
+        font-size: 10px;
+        color: var(--muted);
+        display: block;
+        font-family: var(--mono);
+      }
+    </style>
+  </head>
+  <body>
+    <header><h1>ATHX · Epicure</h1><nav class="menu">
+        <a href="./index.html">Accueil</a>
+        <a href="./tv.html" target="_blank" rel="noopener noreferrer">📺 Dashboard TV</a>
+        <a href="./equipes.html">Équipes</a>
+        <a href="./planning.html">Planning heats</a>
+        <a href="./epreuves.html">Épreuves</a>
+        <a href="./scores.html">Saisie scores</a>
+        <a class="active" href="./classement.html">Classement</a>
+        <a href="./ops.html">Ops</a>
+      </nav>
+    </header>
+    <main>
+      <section class="card">
+        <div class="legend">
+          Système de classement ATHX : <strong style="color:var(--foreground)">somme des rangs</strong> — le total le plus bas gagne.
+          Classement par catégorie et genre. Ex-aequo partagent le même rang.
+        </div>
+        <div id="ranking-root"></div>
+      </section>
+    </main>
+    <script src="./assets/js/data.js"></script>
+    <script>
+      const root = document.querySelector("#ranking-root");
+
+      function render() {
+        const state        = AthxStore.loadState();
+        const ranking      = AthxStore.getRanking(state);
+        const scoredEvents = state.events.filter((e) => e.scored).sort((a, b) => a.order - b.order);
+        root.innerHTML     = "";
+
+        if (!ranking.length) {
+          root.innerHTML = `<p class="muted">Aucun athlète enregistré.</p>`;
+          return;
+        }
+
+        // Regrouper par catégorie/genre
+        const groups = {};
+        ranking.forEach((r) => {
+          const key = `${r.team?.category || "—"}|${r.team?.gender || "—"}`;
+          if (!groups[key]) groups[key] = [];
+          groups[key].push(r);
+        });
+
+        Object.entries(groups).forEach(([key, rows]) => {
+          const [cat, genre] = key.split("|");
+          const table = document.createElement("table");
+          table.className = "ranking-table";
+
+          // En-tête de groupe
+          const sepTr = document.createElement("tr");
+          sepTr.className = "cat-header";
+          sepTr.innerHTML = `<td colspan="${4 + scoredEvents.length}">${cat} — ${genre}</td>`;
+          table.appendChild(sepTr);
+
+          // En-tête colonnes
+          const thead = document.createElement("thead");
+          thead.innerHTML = `<tr>
+            <th style="width:36px">#</th>
+            <th>Athlète</th>
+            <th>Club</th>
+            ${scoredEvents.map((e) => `<th style="text-align:center;min-width:80px">${e.name.replace(" Zone","")}</th>`).join("")}
+            <th style="text-align:center">Total</th>
+          </tr>`;
+          table.appendChild(thead);
+
+          const tbody = document.createElement("tbody");
+
+          // Rang relatif au sein du groupe
+          let groupRank = 0;
+          let prevTotal = null;
+          rows.forEach((r, idx) => {
+            if (r.scoredCount > 0) {
+              if (r.total !== prevTotal) { groupRank = idx + 1; prevTotal = r.total; }
+            }
+
+            const tr = document.createElement("tr");
+            if (r.scoredCount > 0) {
+              if (groupRank === 1) tr.className = "rank-1";
+              else if (groupRank === 2) tr.className = "rank-2";
+              else if (groupRank === 3) tr.className = "rank-3";
+            }
+
+            const rankEmoji = groupRank === 1 ? "🥇" : groupRank === 2 ? "🥈" : groupRank === 3 ? "🥉" : groupRank;
+            const name = r.team ? `${r.team.lastName || ""} ${r.team.firstName || ""}`.trim() || r.team.name || "-" : "-";
+
+            const rankCells = scoredEvents.map((ev) => {
+              const er = r.eventRanks.find((x) => x.eventId === ev.id);
+              // Trouver la performance pour affichage
+              const sc = state.scores.find((s) => s.teamId === r.teamId && s.eventId === ev.id);
+              const perf = sc?.dnf ? "DNF" : (sc?.performance || "");
+              if (!er || er.rank == null) {
+                return `<td class="rank-cell">—</td>`;
+              }
+              // Meilleur rang du groupe pour cet event
+              const bestRank = Math.min(...rows.map((rr) => {
+                const x = rr.eventRanks.find((e) => e.eventId === ev.id);
+                return x?.rank ?? 9999;
+              }));
+              const isBest = er.rank === bestRank;
+              return `<td class="rank-cell ${er.rank ? "has-rank" : ""} ${isBest ? "rank-best" : ""}">
+                ${er.rank}${perf ? `<span class="perf-sub">${perf}</span>` : ""}
+              </td>`;
+            }).join("");
+
+            tr.innerHTML = `
+              <td style="font-weight:700">${r.scoredCount > 0 ? rankEmoji : "—"}</td>
+              <td>${name}</td>
+              <td style="font-size:12px;color:var(--muted)">${r.team?.club || "—"}</td>
+              ${rankCells}
+              <td class="total-cell" style="text-align:center">${r.scoredCount > 0 ? r.total : '<span class="no-score">–</span>'}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+
+          table.appendChild(tbody);
+          root.appendChild(table);
+        });
+      }
+
+      AthxStore.whenCloudReady()
+        .then(() => render())
+        .catch((err) => alert(`Cloud indisponible: ${err.message || err}`));
+    </script>
+  </body>
+</html>

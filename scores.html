@@ -1,0 +1,764 @@
+﻿<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ATHX Epicure – Saisie des scores</title>
+  <link rel="stylesheet" href="./assets/css/styles.css"/>
+  <style>
+    /* ── Table ─────────────────────────────────────────────────────── */
+    .score-sheet-wrap { overflow-x:auto; }
+    table.score-sheet { border-collapse:collapse; width:100%; font-size:13px; }
+
+    table.score-sheet thead th {
+      padding:10px 14px; font-family:var(--mono); font-size:10px;
+      text-align:center; background:var(--raised); white-space:nowrap;
+      border-bottom:2px solid var(--border-md);
+    }
+    table.score-sheet thead th.col-athlete { text-align:left; min-width:160px; }
+    table.score-sheet thead th.col-cat     { min-width:90px; }
+    table.score-sheet thead th.col-heat    { min-width:52px; }
+    table.score-sheet thead th.col-event   { min-width:120px; }
+    .th-zone-icon { font-size:15px; display:block; margin-bottom:2px; }
+    .th-event-dir { font-size:9px; opacity:.6; display:block; margin-top:2px; font-weight:400; }
+
+    tr.cat-sep td {
+      background:var(--volt-dim,rgba(198,255,0,.06));
+      color:var(--accent); font-family:var(--mono);
+      font-size:10px; letter-spacing:.1em; padding:5px 14px;
+      border-top:1px solid var(--accent-border,rgba(198,255,0,.2));
+      text-transform:uppercase; font-weight:700;
+    }
+
+    td.col-athlete { padding:0 14px; font-weight:700; white-space:nowrap; height:44px; line-height:44px; font-size:14px; }
+    td.col-cat     { text-align:center; padding:0 8px; height:44px; }
+    td.col-heat    { text-align:center; font-family:var(--mono); font-size:13px; font-weight:700; height:44px; line-height:44px; padding:0 8px; color:var(--accent); }
+
+    td.score-cell {
+      cursor:pointer; text-align:center; height:44px;
+      border:1px solid var(--border); transition:background .12s;
+      min-width:110px;
+    }
+    td.score-cell:hover { background:var(--card-2,#1a1a1a); }
+    td.score-cell.has-score { background:rgba(198,255,0,.04); }
+
+    .cell-inner { display:flex; align-items:center; justify-content:center; height:100%; gap:6px; padding:0 10px; }
+    .cell-val  { font-family:var(--mono); font-size:13px; font-weight:700; color:var(--accent); }
+    .cell-sub  { font-size:10px; color:var(--muted); display:block; }
+    .cell-empty{ color:var(--faint,#444); font-size:20px; line-height:1; }
+    .cell-dnf  { font-family:var(--mono); font-size:11px; color:#FF4444; font-weight:800; }
+
+    .cat-badge {
+      font-size:10px; font-family:var(--mono); padding:2px 7px;
+      border-radius:10px; font-weight:700; text-transform:uppercase; letter-spacing:.04em;
+    }
+    .cat-Lite { background:rgba(96,165,250,.15); color:#60A5FA; }
+    .cat-ATHX { background:rgba(198,255,0,.1);   color:var(--accent,#C6FF00); }
+    .cat-Pro  { background:rgba(255,107,107,.15); color:#FF6B6B; }
+
+    #sheet-status { font-family:var(--mono); font-size:11px; color:var(--muted); padding:8px 2px; min-height:20px; }
+
+    .legend-row {
+      display:flex; gap:16px; font-size:11px; font-family:var(--mono);
+      color:var(--muted); margin-bottom:14px; flex-wrap:wrap; align-items:center;
+    }
+    .legend-row kbd {
+      background:var(--raised); border:1px solid var(--border-md);
+      border-radius:3px; padding:1px 6px; font-size:10px; color:var(--text);
+    }
+
+    /* ── MetCon toggle (Terminé / Time Cap) ───────────────────── */
+    .metcon-toggle {
+      display:grid; grid-template-columns:1fr 1fr; gap:0;
+      background:#111; border:1px solid #2A2A2A; border-radius:10px; overflow:hidden;
+    }
+    .metcon-btn {
+      padding:12px 8px; text-align:center; cursor:pointer;
+      font-size:13px; font-weight:700; font-family:var(--mono);
+      color:#555; border:none; background:transparent; transition:all .15s;
+    }
+    .metcon-btn.active {
+      background:var(--zc,#C6FF00); color:#0A0A0A;
+    }
+    .metcon-btn:not(.active):hover { background:#1C1C1C; color:#888; }
+    .metcon-section { display:flex; flex-direction:column; gap:10px; }
+    .metcon-section.hidden { display:none; }
+
+    /* ══════════════════════════════════════════════════
+       SCORE MODAL
+    ══════════════════════════════════════════════════ */
+    #score-modal-bg {
+      position:fixed; inset:0; z-index:500;
+      background:rgba(0,0,0,.75); backdrop-filter:blur(4px);
+      display:flex; align-items:center; justify-content:center;
+      opacity:0; pointer-events:none; transition:opacity .2s;
+    }
+    #score-modal-bg.open { opacity:1; pointer-events:auto; }
+
+    #score-modal {
+      background:#1A1A1A; border:1px solid #333;
+      border-radius:16px; width:min(500px,94vw);
+      box-shadow:0 24px 60px rgba(0,0,0,.7);
+      overflow:hidden;
+      transform:translateY(16px) scale(.97);
+      transition:transform .25s cubic-bezier(.17,.67,.3,1.1);
+    }
+    #score-modal-bg.open #score-modal { transform:translateY(0) scale(1); }
+
+    /* Modal top bar */
+    .modal-top {
+      display:flex; align-items:center; gap:14px;
+      padding:18px 22px 14px;
+      border-bottom:1px solid #2A2A2A;
+    }
+    .modal-zone-icon {
+      width:46px; height:46px; border-radius:12px; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center; font-size:22px;
+    }
+    .modal-zone-name {
+      font-size:11px; font-weight:700; text-transform:uppercase;
+      letter-spacing:.08em; font-family:var(--mono);
+    }
+    .modal-ev-name { font-size:18px; font-weight:800; margin-top:2px; }
+    .modal-close {
+      margin-left:auto; width:30px; height:30px; border-radius:50%;
+      border:1px solid #333; background:transparent;
+      color:#888; font-size:16px; cursor:pointer; display:flex;
+      align-items:center; justify-content:center; flex-shrink:0;
+      box-shadow:none;
+    }
+    .modal-close:hover { color:#fff; border-color:#555; background:#222; }
+
+    /* Athlete info */
+    .modal-athlete {
+      display:flex; align-items:center; gap:12px;
+      padding:14px 22px; border-bottom:1px solid #222;
+      background:#141414;
+    }
+    .modal-ath-name { font-size:17px; font-weight:800; flex:1; }
+    .modal-ath-meta { font-size:12px; color:#888; margin-top:2px; }
+
+    /* Previous score */
+    .modal-prev {
+      margin:0 22px; padding:8px 12px;
+      background:#111; border-radius:8px; border:1px solid #2A2A2A;
+      font-family:var(--mono); font-size:12px; color:#666;
+      display:flex; align-items:center; gap:8px;
+      margin-top:14px;
+    }
+    .modal-prev.has-prev { border-color:#333; color:#aaa; }
+    .modal-prev-val { color:var(--zc,#C6FF00); font-weight:700; margin-left:auto; }
+
+    /* Inputs */
+    .modal-body { padding:16px 22px 20px; display:flex; flex-direction:column; gap:14px; }
+
+    /* Single input */
+    .modal-input-wrap { position:relative; }
+    .modal-input-wrap .modal-unit {
+      position:absolute; right:14px; top:50%; transform:translateY(-50%);
+      font-family:var(--mono); font-size:12px; color:#555; pointer-events:none;
+    }
+    .modal-field {
+      width:100%; padding:14px 16px; font-size:20px; font-weight:700;
+      font-family:var(--mono); background:#111; border:2px solid #333;
+      border-radius:10px; color:#fff; text-align:center;
+      transition:border-color .15s;
+    }
+    .modal-field:focus { outline:none; border-color:var(--zc,#C6FF00); box-shadow:0 0 0 3px rgba(198,255,0,.1); }
+    .modal-field::placeholder { color:#444; font-size:14px; font-weight:400; }
+
+    /* Subfields (Strength) */
+    .subfields-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+    .subfield-block { display:flex; flex-direction:column; gap:6px; }
+    .subfield-lbl {
+      font-size:10px; font-weight:700; text-transform:uppercase;
+      letter-spacing:.08em; font-family:var(--mono); text-align:center;
+    }
+    .subfield-inp {
+      width:100%; padding:12px 8px; font-size:18px; font-weight:700;
+      font-family:var(--mono); background:#111; border:2px solid #333;
+      border-radius:10px; color:#fff; text-align:center;
+      transition:border-color .15s;
+    }
+    .subfield-inp:focus { outline:none; border-color:var(--zc,#C6FF00); box-shadow:0 0 0 3px rgba(198,255,0,.08); }
+    .subfield-unit { font-size:10px; color:#555; text-align:center; font-family:var(--mono); }
+
+    /* Total */
+    .modal-total {
+      background:#111; border:1px solid #2A2A2A; border-radius:10px;
+      padding:12px 16px; text-align:center;
+    }
+    .modal-total-lbl { font-size:10px; color:#555; font-family:var(--mono); text-transform:uppercase; letter-spacing:.08em; }
+    .modal-total-val { font-size:28px; font-weight:900; font-family:var(--mono); color:var(--zc,#C6FF00); margin-top:2px; }
+
+    /* DNF toggle */
+    .modal-dnf {
+      display:flex; align-items:center; gap:10px;
+      padding:10px 14px; background:#111; border-radius:10px;
+      border:1px solid #2A2A2A; cursor:pointer;
+    }
+    .modal-dnf input[type="checkbox"] { display:none; }
+    .dnf-track {
+      width:38px; height:22px; border-radius:11px;
+      background:#2A2A2A; border:1px solid #3A3A3A;
+      position:relative; flex-shrink:0; transition:background .2s;
+    }
+    .dnf-track::after {
+      content:''; position:absolute; top:3px; left:3px;
+      width:14px; height:14px; border-radius:50%;
+      background:#666; transition:all .2s;
+    }
+    .modal-dnf.dnf-on .dnf-track { background:#FF444420; border-color:#FF4444; }
+    .modal-dnf.dnf-on .dnf-track::after { background:#FF4444; transform:translateX(16px); }
+    .dnf-label { font-size:13px; font-weight:700; font-family:var(--mono); color:#666; flex:1; }
+    .modal-dnf.dnf-on .dnf-label { color:#FF4444; }
+    .dnf-desc { font-size:11px; color:#444; }
+
+    /* Hint */
+    .modal-hint { font-size:11px; color:#444; font-family:var(--mono); text-align:center; }
+
+    /* Buttons */
+    .modal-footer {
+      display:flex; gap:10px; padding:14px 22px;
+      border-top:1px solid #222; background:#141414;
+    }
+    .modal-footer button { flex:1; padding:13px; font-size:14px; font-weight:700; border-radius:10px; }
+    .btn-cancel { background:#1C1C1C; border-color:#333; color:#888; }
+    .btn-cancel:hover { background:#222; color:#ccc; }
+    .btn-save {
+      background:var(--zc,#C6FF00); border-color:var(--zc,#C6FF00);
+      color:#0A0A0A; font-weight:800;
+      box-shadow:0 0 16px rgba(198,255,0,.25);
+    }
+    .btn-save:hover { filter:brightness(1.1); }
+    .btn-clear { background:#1C1C1C; border-color:#FF444440; color:#FF4444; flex:0 0 auto; padding:13px 16px; }
+    .btn-clear:hover { background:#FF444415; border-color:#FF4444; }
+  </style>
+</head>
+<body>
+  <header><h1>ATHX · Epicure</h1><nav class="menu">
+      <a href="./index.html">Accueil</a>
+      <a href="./tv.html" target="_blank" rel="noopener noreferrer">📺 Dashboard TV</a>
+      <a href="./equipes.html">Équipes</a>
+      <a href="./planning.html">Planning heats</a>
+      <a href="./epreuves.html">Épreuves</a>
+      <a class="active" href="./scores.html">Saisie scores</a>
+      <a href="./classement.html">Classement</a>
+      <a href="./resultats.html">Résultats Live</a>
+      <a href="./ops.html">Ops</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="legend-row">
+        <span>Cliquer sur une cellule pour saisir un score</span>
+        <span><kbd>Entrée</kbd> valider · <kbd>Échap</kbd> annuler</span>
+      </div>
+      <div class="score-sheet-wrap">
+        <table class="score-sheet">
+          <thead id="score-head"></thead>
+          <tbody id="score-body"></tbody>
+        </table>
+      </div>
+      <div id="sheet-status"></div>
+    </section>
+  </main>
+
+  <!-- ── SCORE MODAL ────────────────────────────────────────────── -->
+  <div id="score-modal-bg">
+    <div id="score-modal">
+      <!-- Top bar -->
+      <div class="modal-top" id="modal-top">
+        <div class="modal-zone-icon" id="modal-zone-icon">📊</div>
+        <div>
+          <div class="modal-zone-name" id="modal-zone-name">Zone</div>
+          <div class="modal-ev-name"   id="modal-ev-name">Épreuve</div>
+        </div>
+        <button class="modal-close" id="modal-close-btn">✕</button>
+      </div>
+      <!-- Athlete -->
+      <div class="modal-athlete">
+        <div>
+          <div class="modal-ath-name" id="modal-ath-name">—</div>
+          <div class="modal-ath-meta" id="modal-ath-meta"></div>
+        </div>
+        <span class="cat-badge" id="modal-ath-cat"></span>
+      </div>
+      <!-- Body -->
+      <div class="modal-body" id="modal-body"></div>
+      <!-- Footer -->
+      <div class="modal-footer">
+        <button class="btn-clear" id="modal-btn-clear" title="Effacer le score">🗑</button>
+        <button class="btn-cancel" id="modal-btn-cancel">Annuler</button>
+        <button class="btn-save"   id="modal-btn-save">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./assets/js/data.js"></script>
+  <script>
+    const ZONE_META = {
+      ev_warmup:    { color:'#FF6B35', icon:'🔥' },
+      ev_strength:  { color:'#FF4444', icon:'🏋️' },
+      ev_refuel:    { color:'#00D4AA', icon:'💧' },
+      ev_endurance: { color:'#C6FF00', icon:'🏃' },
+      ev_recovery:  { color:'#9B5DE5', icon:'⚡' },
+      ev_metcon:    { color:'#00BFFF', icon:'⏱️' },
+    };
+    const UNIT_HINTS = { kg:'ex: 245', m:'ex: 3750', s:'mm:ss  ex: 18:42', reps:'ex: 84' };
+
+    const scoreHead   = document.getElementById('score-head');
+    const scoreBody   = document.getElementById('score-body');
+    const sheetStatus = document.getElementById('sheet-status');
+
+    let scoredEvents = [];
+    let allCells     = [];
+    let modalData    = null; // { teamId, eventId, ev, team }
+
+    /* ── Modal helpers ─────────────────────────────────────────── */
+    function openModal(teamId, eventId) {
+      const state = AthxStore.loadState();
+      const team  = state.teams.find(t => t.id === teamId);
+      const ev    = state.events.find(e => e.id === eventId);
+      const score = state.scores.find(s => s.teamId === teamId && s.eventId === eventId);
+      if (!team || !ev) return;
+
+      modalData = { teamId, eventId, ev, team };
+      const meta = ZONE_META[eventId] || { color:'#C6FF00', icon:'📊' };
+
+      // Top bar
+      document.getElementById('modal-zone-icon').textContent = meta.icon;
+      document.getElementById('modal-zone-icon').style.background  = meta.color+'22';
+      document.getElementById('modal-zone-icon').style.border = `1px solid ${meta.color}44`;
+      document.getElementById('modal-zone-name').textContent = `Zone ${ev.zone}`;
+      document.getElementById('modal-zone-name').style.color = meta.color;
+      document.getElementById('modal-ev-name').textContent   = ev.name.replace(' Zone','');
+      document.getElementById('score-modal').style.setProperty('--zc', meta.color);
+
+      // Athlete
+      const ln = (team.lastName||'').toUpperCase();
+      const fn = team.firstName||'';
+      document.getElementById('modal-ath-name').textContent = `${ln} ${fn}`.trim();
+      document.getElementById('modal-ath-meta').textContent =
+        `${team.category} · ${team.gender} · ${ev.scoreFormat||''}`;
+      const catEl = document.getElementById('modal-ath-cat');
+      catEl.textContent  = `${team.category} ${team.gender}`;
+      catEl.className    = `cat-badge cat-${team.category}`;
+
+      // Body
+      const body = document.getElementById('modal-body');
+      body.innerHTML = '';
+
+      // Previous score banner
+      const prevDiv = document.createElement('div');
+      prevDiv.className = score ? 'modal-prev has-prev' : 'modal-prev';
+      if (score && !score.dnf) {
+        prevDiv.innerHTML = `<span>Score actuel</span><span class="modal-prev-val">${fmtScoreDisplay(score, ev)}</span>`;
+      } else if (score?.dnf) {
+        prevDiv.innerHTML = `<span>Score actuel</span><span class="modal-prev-val" style="color:#FF4444">DNF</span>`;
+      } else {
+        prevDiv.innerHTML = `<span style="font-style:italic">Aucun score enregistré</span>`;
+      }
+      body.appendChild(prevDiv);
+
+      if (ev.subFields?.length) {
+        // ── Strength : 3 champs ──
+        const grid = document.createElement('div');
+        grid.className = 'subfields-row';
+        ev.subFields.forEach(sf => {
+          const cur = score?.subValues?.[sf.key];
+          grid.innerHTML += `
+            <div class="subfield-block">
+              <div class="subfield-lbl" style="color:${meta.color}">${sf.label}</div>
+              <input type="number" class="subfield-inp sf-input" data-key="${sf.key}"
+                min="0" step="2.5" placeholder="0"
+                value="${cur != null ? cur : ''}"/>
+              <div class="subfield-unit">${sf.unit}</div>
+            </div>`;
+        });
+        body.appendChild(grid);
+
+        const totalDiv = document.createElement('div');
+        totalDiv.className = 'modal-total';
+        totalDiv.innerHTML = `<div class="modal-total-lbl">Total</div><div class="modal-total-val" id="modal-total">— kg</div>`;
+        body.appendChild(totalDiv);
+
+        body.querySelectorAll('.sf-input').forEach(inp => {
+          inp.addEventListener('input', updateModalTotal);
+        });
+        updateModalTotal();
+        setTimeout(() => body.querySelector('.sf-input')?.focus(), 80);
+
+      } else if (ev.timeCap) {
+        // ── MetCon Time Cap : toggle Terminé / Time Cap ──
+        const isTc  = isTimecapScore(score);
+        const tcSec = ev.timeCapSeconds || 1500;
+        const mm    = Math.floor(tcSec/60), ss = String(tcSec%60).padStart(2,'0');
+
+        const wrap = document.createElement('div');
+        wrap.innerHTML = `
+          <div class="metcon-toggle">
+            <button class="metcon-btn ${!isTc?'active':''}" id="mc-btn-finish">⏱ Terminé</button>
+            <button class="metcon-btn ${isTc?'active':''}"  id="mc-btn-tc">🚫 Time Cap (${mm}:${ss})</button>
+          </div>
+          <!-- Section : terminé -->
+          <div class="metcon-section ${isTc?'hidden':''}" id="mc-section-finish">
+            <div class="modal-input-wrap">
+              <input type="text" class="modal-field" id="modal-main-input"
+                placeholder="mm:ss  ex: 18:42"
+                value="${score && !score.dnf && !isTc ? (score.performance||'') : ''}"/>
+              <span class="modal-unit">mm:ss</span>
+            </div>
+            <div class="modal-hint">Temps de l'athlète — inférieur au time cap (${mm}:${ss})</div>
+          </div>
+          <!-- Section : time cap + reps -->
+          <div class="metcon-section ${!isTc?'hidden':''}" id="mc-section-tc">
+            <div class="modal-total" style="border-color:#FF444444">
+              <div class="modal-total-lbl" style="color:#FF4444">Time Cap atteint — ${mm}:${ss}</div>
+              <div style="font-size:12px;color:#666;margin-top:4px;font-family:var(--mono)">
+                Entrer le nombre de répétitions complétées<br>
+                <span style="color:#888">Plus de reps = meilleur classement parmi les time caps</span>
+              </div>
+            </div>
+            <div class="modal-input-wrap">
+              <input type="number" class="modal-field" id="modal-reps-input" min="0" step="1"
+                placeholder="ex: 284"
+                value="${isTc && score?.reps != null ? score.reps : ''}"/>
+              <span class="modal-unit">reps</span>
+            </div>
+          </div>`;
+        body.appendChild(wrap);
+
+        // Toggle logic
+        document.getElementById('mc-btn-finish').addEventListener('click', () => {
+          document.getElementById('mc-btn-finish').classList.add('active');
+          document.getElementById('mc-btn-tc').classList.remove('active');
+          document.getElementById('mc-section-finish').classList.remove('hidden');
+          document.getElementById('mc-section-tc').classList.add('hidden');
+          setTimeout(() => { const i = document.getElementById('modal-main-input'); i?.focus(); i?.select(); }, 50);
+        });
+        document.getElementById('mc-btn-tc').addEventListener('click', () => {
+          document.getElementById('mc-btn-tc').classList.add('active');
+          document.getElementById('mc-btn-finish').classList.remove('active');
+          document.getElementById('mc-section-tc').classList.remove('hidden');
+          document.getElementById('mc-section-finish').classList.add('hidden');
+          setTimeout(() => { const i = document.getElementById('modal-reps-input'); i?.focus(); i?.select(); }, 50);
+        });
+
+        setTimeout(() => {
+          const inp = isTc ? document.getElementById('modal-reps-input') : document.getElementById('modal-main-input');
+          inp?.focus(); inp?.select();
+        }, 80);
+
+      } else {
+        // ── Single field ──
+        const wrap = document.createElement('div');
+        wrap.className = 'modal-input-wrap';
+        wrap.innerHTML = `
+          <input type="${ev.scoreUnit==='s'?'text':'number'}" class="modal-field" id="modal-main-input"
+            placeholder="${UNIT_HINTS[ev.scoreUnit]||ev.scoreFormat||'Score'}"
+            value="${score && !score.dnf ? (score.performance||score.rawValue||'') : ''}"
+            ${ev.scoreUnit!=='s'?'min="0" step="0.5"':''}/>
+          <span class="modal-unit">${ev.scoreUnit==='s'?'mm:ss':ev.scoreUnit}</span>`;
+        body.appendChild(wrap);
+        setTimeout(() => {
+          const inp = document.getElementById('modal-main-input');
+          inp?.focus(); inp?.select();
+        }, 80);
+      }
+
+      // DNF toggle
+      const dnfDiv = document.createElement('label');
+      dnfDiv.className = 'modal-dnf' + (score?.dnf ? ' dnf-on' : '');
+      dnfDiv.innerHTML = `
+        <input type="checkbox" id="modal-dnf-chk" ${score?.dnf?'checked':''}/>
+        <div class="dnf-track"></div>
+        <div class="dnf-label">DNF</div>
+        <div class="dnf-desc">Did Not Finish — score annulé</div>`;
+      dnfDiv.querySelector('input').addEventListener('change', e => {
+        dnfDiv.classList.toggle('dnf-on', e.target.checked);
+        const inp = document.getElementById('modal-main-input');
+        if (inp) { inp.disabled = e.target.checked; if(e.target.checked) inp.value=''; }
+        body.querySelectorAll('.sf-input').forEach(i => { i.disabled = e.target.checked; if(e.target.checked) i.value=''; });
+        if(e.target.checked){ const t=document.getElementById('modal-total'); if(t) t.textContent='DNF'; }
+        else updateModalTotal();
+      });
+      body.appendChild(dnfDiv);
+
+      // Hint
+      if (!ev.subFields?.length) {
+        const hint = document.createElement('div');
+        hint.className = 'modal-hint';
+        hint.textContent = `${ev.higherIsBetter ? '▲ Plus haut = meilleur' : '▼ Plus bas = meilleur'} · ${ev.notes||''}`;
+        hint.style.cssText = 'max-height:40px;overflow:hidden;text-overflow:ellipsis;';
+        body.appendChild(hint);
+      }
+
+      document.getElementById('score-modal-bg').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('score-modal-bg').classList.remove('open');
+      modalData = null;
+    }
+
+    function updateModalTotal() {
+      const totalEl = document.getElementById('modal-total');
+      if (!totalEl || !modalData?.ev?.subFields) return;
+      const body = document.getElementById('modal-body');
+      const sum = modalData.ev.subFields.reduce((s, sf) => {
+        const v = parseFloat(body.querySelector(`[data-key="${sf.key}"]`)?.value || 0);
+        return s + (isNaN(v) ? 0 : v);
+      }, 0);
+      totalEl.textContent = sum > 0 ? `${sum} kg` : '— kg';
+    }
+
+    function saveModal() {
+      if (!modalData) return;
+      const { teamId, eventId, ev } = modalData;
+      const state  = AthxStore.loadState();
+      const isDnf  = document.getElementById('modal-dnf-chk')?.checked;
+      const body   = document.getElementById('modal-body');
+
+      if (isDnf) {
+        AthxStore.upsertScore(state, { teamId, eventId, performance:'DNF', rawValue:null, dnf:true, subValues:{} });
+      } else if (ev.subFields?.length) {
+        const subValues = {};
+        let allEmpty = true;
+        ev.subFields.forEach(sf => {
+          const v = parseFloat(body.querySelector(`[data-key="${sf.key}"]`)?.value);
+          subValues[sf.key] = isNaN(v) ? null : v;
+          if (!isNaN(v) && v > 0) allEmpty = false;
+        });
+        if (allEmpty) { state.scores = state.scores.filter(s => !(s.teamId===teamId && s.eventId===eventId)); }
+        else {
+          const total = ev.subFields.reduce((s,sf) => s + (subValues[sf.key]||0), 0);
+          AthxStore.upsertScore(state, { teamId, eventId, performance:`${total} kg`, rawValue:total, dnf:false, subValues });
+        }
+      } else if (ev.timeCap) {
+        // ── MetCon : Terminé ou Time Cap ──
+        const tcActive = document.getElementById('mc-btn-tc')?.classList.contains('active');
+        if (tcActive) {
+          const reps = parseInt(document.getElementById('modal-reps-input')?.value||'0', 10);
+          if (!reps || reps <= 0) {
+            state.scores = state.scores.filter(s => !(s.teamId===teamId && s.eventId===eventId));
+          } else {
+            AthxStore.upsertScore(state, {
+              teamId, eventId,
+              performance: `TC +${reps} reps`,
+              rawValue: encodeTimecapReps(reps),
+              dnf: false,
+              timeCapped: true,
+              reps,
+            });
+          }
+        } else {
+          const rawStr = (document.getElementById('modal-main-input')?.value||'').trim();
+          if (!rawStr) {
+            state.scores = state.scores.filter(s => !(s.teamId===teamId && s.eventId===eventId));
+          } else {
+            const rawVal = AthxStore.parseScoreValue(rawStr);
+            AthxStore.upsertScore(state, { teamId, eventId, performance:rawStr, rawValue:rawVal, dnf:false, timeCapped:false });
+          }
+        }
+      } else {
+        const rawStr = (document.getElementById('modal-main-input')?.value||'').trim();
+        if (!rawStr) { state.scores = state.scores.filter(s => !(s.teamId===teamId && s.eventId===eventId)); }
+        else {
+          const rawVal = AthxStore.parseScoreValue(rawStr);
+          AthxStore.upsertScore(state, { teamId, eventId, performance:rawStr, rawValue:rawVal, dnf:false });
+        }
+      }
+
+      AthxStore.saveState(state);
+      sheetStatus.textContent = `✓ Sauvegardé — ${modalData.team.lastName||''} ${modalData.team.firstName||''} · ${ev.name.replace(' Zone','')}`;
+      setTimeout(() => { sheetStatus.textContent = ''; }, 3000);
+
+      // Refresh table cell
+      const td = document.querySelector(`td.score-cell[data-team-id="${teamId}"][data-event-id="${eventId}"]`);
+      if (td) refreshCell(td);
+      closeModal();
+    }
+
+    function clearModal() {
+      if (!modalData) return;
+      const { teamId, eventId, ev } = modalData;
+      const state = AthxStore.loadState();
+      state.scores = state.scores.filter(s => !(s.teamId===teamId && s.eventId===eventId));
+      AthxStore.saveState(state);
+      sheetStatus.textContent = `Effacé — ${modalData.team.lastName||''} ${modalData.team.firstName||''} · ${ev.name.replace(' Zone','')}`;
+      setTimeout(() => { sheetStatus.textContent = ''; }, 3000);
+      const td = document.querySelector(`td.score-cell[data-team-id="${teamId}"][data-event-id="${eventId}"]`);
+      if (td) refreshCell(td);
+      closeModal();
+    }
+
+    /* ── MetCon encoding / decoding ────────────────────────────── */
+    // Convention rawValue pour MetCon timeCap :
+    //   Terminé        → rawValue = secondes (ex: 1122 = 18:42), timeCapped: false
+    //   Time cap + rep → rawValue = 100000 - reps (ex: 284 reps → 99716), timeCapped: true
+    // Ainsi higherIsBetter:false trie correctement : temps (petits) avant reps (grands)
+    const TIMECAP_OFFSET = 100000;
+
+    function encodeTimecapReps(reps) { return TIMECAP_OFFSET - reps; }
+    function decodeTimecapReps(raw)  { return TIMECAP_OFFSET - raw; }
+    function isTimecapScore(score)   { return score?.timeCapped === true; }
+
+    /* ── Cell display ──────────────────────────────────────────── */
+    function fmtScoreDisplay(score, ev) {
+      if (!score || score.dnf) return null;
+      const raw = score.rawValue ?? score.performance;
+      if (raw == null || raw === '') return null;
+      // MetCon time cap → afficher les reps
+      if (ev.timeCap && isTimecapScore(score)) {
+        const reps = score.reps ?? decodeTimecapReps(Number(raw));
+        return `TC +${reps} reps`;
+      }
+      if (ev.scoreUnit === 's') {
+        const v = AthxStore.parseScoreValue(String(raw));
+        if (v == null) return String(raw);
+        const mm = Math.floor(v/60), ss = Math.floor(v%60);
+        return `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+      }
+      return String(raw) + (ev.scoreUnit ? ' ' + ev.scoreUnit : '');
+    }
+
+    function refreshCell(td) {
+      const { teamId, eventId } = td.dataset;
+      const state = AthxStore.loadState();
+      const score = state.scores.find(s => s.teamId === teamId && s.eventId === eventId);
+      const ev    = state.events.find(e => e.id === eventId);
+      const inner = td.querySelector('.cell-inner');
+      if (!inner) return;
+
+      td.classList.toggle('has-score', !!score);
+
+      if (!score) {
+        inner.innerHTML = `<span class="cell-empty">·</span>`;
+      } else if (score.dnf) {
+        inner.innerHTML = `<span class="cell-dnf">DNF</span>`;
+      } else if (ev?.subFields?.length && score.subValues) {
+        const total = score.rawValue ?? 0;
+        const subs  = ev.subFields.map(sf => {
+          const v = score.subValues[sf.key];
+          return v != null ? `${sf.label.split(' ')[0]}: ${v}` : '';
+        }).filter(Boolean).join(' · ');
+        inner.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+          <span class="cell-val">${total} kg</span>
+          <span class="cell-sub">${subs}</span>
+        </div>`;
+      } else if (ev?.timeCap && isTimecapScore(score)) {
+        const reps = score.reps ?? decodeTimecapReps(Number(score.rawValue));
+        inner.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+          <span style="font-family:var(--mono);font-size:10px;font-weight:700;color:#FF6B6B">TIME CAP</span>
+          <span class="cell-val" style="color:#FF6B6B">+${reps} <span style="font-size:10px;font-weight:400;color:#888">reps</span></span>
+        </div>`;
+      } else {
+        const val = fmtScoreDisplay(score, ev);
+        inner.innerHTML = val
+          ? `<span class="cell-val">${val}</span>`
+          : `<span class="cell-val">${score.performance||'—'}</span>`;
+      }
+    }
+
+    /* ── Build table ───────────────────────────────────────────── */
+    function render() {
+      const state = AthxStore.loadState();
+      scoredEvents = [...state.events].filter(e => e.scored).sort((a,b) => a.order - b.order);
+      allCells = [];
+
+      // Header
+      scoreHead.innerHTML = `<tr>
+        <th class="col-athlete">Athlète</th>
+        <th class="col-cat">Catégorie</th>
+        <th class="col-heat">Heat</th>
+        ${scoredEvents.map(ev => {
+          const meta = ZONE_META[ev.id] || { icon:'•', color:'#888' };
+          return `<th class="col-event" style="border-bottom:2px solid ${meta.color}55">
+            <span class="th-zone-icon">${meta.icon}</span>
+            Z${ev.zone} ${ev.name.replace(' Zone','')}
+            <span class="th-event-dir">${ev.higherIsBetter?'▲ max':'▼ min'} · ${ev.scoreFormat}</span>
+          </th>`;
+        }).join('')}
+      </tr>`;
+
+      // Body
+      scoreBody.innerHTML = '';
+      const sorted   = [...state.teams].sort(AthxStore.compareAthletes);
+      const schedule = AthxStore.buildHeatSchedule(state);
+      const heatMap  = {};
+      schedule.forEach(h => h.athletes.forEach(a => { heatMap[a.id] = h.heat; }));
+      let lastGroup = null;
+
+      sorted.forEach(team => {
+        const grp = `${team.category||'—'} ${team.gender||''}`.trim();
+        if (grp !== lastGroup) {
+          lastGroup = grp;
+          const sep = document.createElement('tr');
+          sep.className = 'cat-sep';
+          sep.innerHTML = `<td colspan="${3+scoredEvents.length}">${grp}</td>`;
+          scoreBody.appendChild(sep);
+        }
+
+        const tr   = document.createElement('tr');
+        const ln   = (team.lastName||'').toUpperCase();
+        const fn   = team.firstName||'';
+        const heat = heatMap[team.id]||'?';
+        const meta = team.category;
+
+        tr.innerHTML = `
+          <td class="col-athlete">${ln} <span style="font-weight:400;opacity:.75">${fn}</span></td>
+          <td class="col-cat"><span class="cat-badge cat-${meta}">${meta} ${team.gender||''}</span></td>
+          <td class="col-heat">H${heat}</td>
+          ${scoredEvents.map(ev => `
+            <td class="score-cell" data-team-id="${team.id}" data-event-id="${ev.id}">
+              <div class="cell-inner"><span class="cell-empty">·</span></div>
+            </td>`).join('')}`;
+
+        scoredEvents.forEach((ev, ei) => {
+          const td = tr.querySelectorAll('td.score-cell')[ei];
+          td.dataset.teamId  = team.id;
+          td.dataset.eventId = ev.id;
+          allCells.push({ td, teamId: team.id, eventId: ev.id });
+          td.addEventListener('click', () => openModal(team.id, ev.id));
+        });
+
+        scoreBody.appendChild(tr);
+      });
+
+      if (!sorted.length) {
+        scoreBody.innerHTML = `<tr><td colspan="${3+scoredEvents.length}"
+          style="text-align:center;color:var(--muted);padding:32px">
+          Aucun athlète enregistré.
+        </td></tr>`;
+      }
+
+      allCells.forEach(({ td }) => refreshCell(td));
+    }
+
+    /* ── Modal event listeners ─────────────────────────────────── */
+    document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+    document.getElementById('modal-btn-cancel').addEventListener('click', closeModal);
+    document.getElementById('modal-btn-save').addEventListener('click', saveModal);
+    document.getElementById('modal-btn-clear').addEventListener('click', clearModal);
+
+    document.getElementById('score-modal-bg').addEventListener('click', e => {
+      if (e.target === document.getElementById('score-modal-bg')) closeModal();
+    });
+
+    document.addEventListener('keydown', e => {
+      if (!modalData) return;
+      if (e.key === 'Escape') { e.preventDefault(); closeModal(); }
+      if (e.key === 'Enter' && !e.shiftKey && e.target.tagName !== 'BUTTON') {
+        e.preventDefault(); saveModal();
+      }
+    });
+
+    /* ── Init ──────────────────────────────────────────────────── */
+    AthxStore.whenCloudReady()
+      .then(() => render())
+      .catch(err => alert(`Cloud indisponible: ${err.message||err}`));
+  </script>
+</body>
+</html>

@@ -1,0 +1,163 @@
+﻿<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ATHX Epicure - Gestion compétition</title>
+    <link rel="stylesheet" href="./assets/css/styles.css" />
+  </head>
+  <body>
+    <header><h1>ATHX · Epicure</h1><nav class="menu">
+        <a class="active" href="./index.html">Accueil</a>
+        <a href="./tv.html" target="_blank" rel="noopener noreferrer">📺 Dashboard TV</a>
+        <a href="./equipes.html">Équipes</a>
+        <a href="./planning.html">Planning heats</a>
+        <a href="./epreuves.html">Épreuves</a>
+        <a href="./scores.html">Saisie scores</a>
+        <a href="./classement.html">Classement</a>
+        <a href="./resultats.html">Résultats Live</a>
+        <a href="./ops.html">Ops</a>
+      </nav>
+    </header>
+
+    <main class="grid grid-2">
+      <section class="card">
+        <h2>Configuration rapide</h2>
+        <p class="muted">
+          Définis ici les infos principales de la compétition.
+        </p>
+        <form id="config-form">
+          <label>Nom de la compétition <input id="name" required /></label>
+          <label>Lieu <input id="location" /></label>
+          <label>Date <input id="date" type="date" /></label>
+          <label>Heure du 1er départ <input id="start-time" type="time" value="08:00" /></label>
+          <label>Intervalle départ (minutes) <input id="interval" type="number" min="1" value="20" /></label>
+          <label>Athlètes par heat <input id="athletes-per-heat" type="number" min="1" value="2" /></label>
+          <button class="primary" type="submit">Enregistrer</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Compétition active</h2>
+        <p class="muted">Chaque compétition est isolée dans le cloud via son identifiant.</p>
+        <div class="row">
+          <label>
+            Sélectionner une compétition existante
+            <select id="competition-select"></select>
+          </label>
+          <button id="competition-refresh" type="button">Rafraîchir la liste</button>
+          <button id="competition-open-selected" type="button" class="primary">Ouvrir la sélection</button>
+        </div>
+        <form id="competition-form">
+          <label>ID compétition (slug) <input id="competition-ref" placeholder="ex: epicure-2026" /></label>
+          <div class="row">
+            <button class="primary" type="submit">Créer / ouvrir cette compétition</button>
+          </div>
+        </form>
+        <p id="competition-current" class="muted"></p>
+        <p id="competition-list-status" class="muted"></p>
+      </section>
+
+    </main>
+
+    <script src="./assets/js/data.js"></script>
+    <script>
+      const form = document.querySelector("#config-form");
+      const nameInput = document.querySelector("#name");
+      const locationInput = document.querySelector("#location");
+      const dateInput = document.querySelector("#date");
+      const startTimeInput = document.querySelector("#start-time");
+      const intervalInput = document.querySelector("#interval");
+      const perHeatInput = document.querySelector("#athletes-per-heat");
+      const competitionForm = document.querySelector("#competition-form");
+      const competitionRefInput = document.querySelector("#competition-ref");
+      const competitionCurrent = document.querySelector("#competition-current");
+      const competitionSelect = document.querySelector("#competition-select");
+      const competitionRefreshBtn = document.querySelector("#competition-refresh");
+      const competitionOpenSelectedBtn = document.querySelector("#competition-open-selected");
+      const competitionListStatus = document.querySelector("#competition-list-status");
+
+      function refresh() {
+        const state = AthxStore.loadState();
+        nameInput.value = state.config.competitionName || "";
+        locationInput.value = state.config.location || "";
+        dateInput.value = state.config.date || "";
+        startTimeInput.value = state.config.startTime || "08:00";
+        intervalInput.value = Number(state.config.heatIntervalMinutes || 20);
+        perHeatInput.value = Number(state.config.athletesPerHeat || 2);
+        const activeRef = AthxStore.getRemoteConfig().projectRef;
+        competitionRefInput.value = activeRef;
+        competitionCurrent.textContent = `Compétition active : ${activeRef}`;
+      }
+
+      function goToCompetition(ref) {
+        const safe = AthxStore.sanitizeCompetitionRef(ref);
+        const target = AthxStore.buildCompetitionUrl(safe, false);
+        window.location.href = target;
+      }
+
+      async function refreshCompetitionList() {
+        try {
+          competitionListStatus.textContent = "Chargement des compétitions...";
+          const items = await AthxStore.listCompetitions();
+          const active = AthxStore.getRemoteConfig().projectRef;
+          const allIds = Array.from(new Set([active, ...items.map((x) => x.id).filter(Boolean)]));
+          competitionSelect.innerHTML = allIds
+            .map((id) => {
+              const row = items.find((x) => x.id === id);
+              const dt = row?.updatedAt ? ` (maj ${new Date(row.updatedAt).toLocaleString()})` : "";
+              const selected = id === active ? "selected" : "";
+              return `<option value="${id}" ${selected}>${id}${dt}</option>`;
+            })
+            .join("");
+          competitionListStatus.textContent = `${allIds.length} compétition(s) disponible(s).`;
+        } catch (err) {
+          competitionListStatus.textContent = `Erreur liste compétitions: ${err.message || err}`;
+        }
+      }
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const state = AthxStore.loadState();
+        state.config.competitionName = nameInput.value.trim();
+        state.config.location = locationInput.value.trim();
+        state.config.date = dateInput.value;
+        state.config.startTime = startTimeInput.value || "08:00";
+        state.config.heatIntervalMinutes = Number(intervalInput.value || 20);
+        state.config.athletesPerHeat = Number(perHeatInput.value || 2);
+        AthxStore.saveState(state);
+        try {
+          await AthxStore.pushRemote(state);
+        } catch (err) {
+          console.error("Erreur de sauvegarde cloud immédiate", err);
+          alert(`Configuration enregistrée localement en mémoire, mais échec cloud: ${err.message || err}`);
+        }
+        refresh();
+      });
+
+      competitionForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        goToCompetition(competitionRefInput.value);
+      });
+
+      competitionRefreshBtn.addEventListener("click", () => {
+        refreshCompetitionList();
+      });
+
+      competitionOpenSelectedBtn.addEventListener("click", () => {
+        if (!competitionSelect.value) return;
+        goToCompetition(competitionSelect.value);
+      });
+
+      async function bootstrapCloud() {
+        try {
+          await AthxStore.whenCloudReady();
+        } catch (_) {}
+        refresh();
+        refreshCompetitionList();
+      }
+
+      bootstrapCloud();
+    </script>
+  </body>
+</html>
