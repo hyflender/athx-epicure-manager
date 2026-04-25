@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ATHX Epicure - Ops Dashboard</title>
     <link rel="stylesheet" href="./assets/css/styles.css" />
+    <link rel="stylesheet" href="./assets/css/auth.css" />
     <style>
       /* ── Layout ─────────────────────────────────────────────────── */
       body { overflow-x: hidden; }
@@ -346,6 +347,7 @@
       </div>
     </div>
 
+        <script src="./assets/js/auth.js"></script>
     <script src="./assets/js/data.js"></script>
     <script>
       const CALL_AHEAD_MIN = 10; // appeler les athlètes X min avant leur départ dans la zone
@@ -663,13 +665,16 @@
       }
 
       // ── Init ─────────────────────────────────────────────────────
-      AthxStore.whenCloudReady().then(() => {
-        buildData();
-        buildZoneCards();
-        tick();
-        setInterval(tick, 1000);
-        renderNews();
-      }).catch(err => alert(`Cloud indisponible: ${err.message||err}`));
+      AthxAuth.requireAuth({ onSuccess: () => {
+        injectLogoutBtn();
+        AthxStore.whenCloudReady().then(() => {
+          buildData();
+          buildZoneCards();
+          tick();
+          setInterval(tick, 1000);
+          renderNews();
+        }).catch(err => alert(`Cloud indisponible: ${err.message||err}`));
+      }});
 
       // ── NEWS ──────────────────────────────────────────────────────
       function renderNews() {

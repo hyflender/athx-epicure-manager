@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ATHX Epicure – Saisie des scores</title>
   <link rel="stylesheet" href="./assets/css/styles.css"/>
+    <link rel="stylesheet" href="./assets/css/auth.css" />
   <style>
     /* ── Table ─────────────────────────────────────────────────────── */
     .score-sheet-wrap { overflow-x:auto; }
@@ -286,7 +287,8 @@
     </div>
   </div>
 
-  <script src="./assets/js/data.js"></script>
+      <script src="./assets/js/auth.js"></script>
+    <script src="./assets/js/data.js"></script>
   <script>
     const ZONE_META = {
       ev_warmup:    { color:'#FF6B35', icon:'🔥' },
@@ -746,9 +748,12 @@
     });
 
     /* ── Init ──────────────────────────────────────────────────── */
-    AthxStore.whenCloudReady()
-      .then(() => render())
-      .catch(err => alert(`Cloud indisponible: ${err.message||err}`));
+    AthxAuth.requireAuth({ onSuccess: () => {
+      injectLogoutBtn();
+      AthxStore.whenCloudReady()
+        .then(() => render())
+        .catch(err => alert(`Cloud indisponible: ${err.message||err}`));
+    }});
   </script>
 </body>
 </html>

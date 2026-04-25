@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ATHX Epicure - Gestion compétition</title>
     <link rel="stylesheet" href="./assets/css/styles.css" />
+    <link rel="stylesheet" href="./assets/css/auth.css" />
   </head>
   <body>
     <header><h1>ATHX · Epicure</h1><nav class="menu">
@@ -56,8 +57,26 @@
         <p id="competition-list-status" class="muted"></p>
       </section>
 
+      <section class="card">
+        <h2>🔐 Sécurité — Mot de passe admin</h2>
+        <p class="muted">Protège la configuration et la saisie de scores.</p>
+        <form id="password-form">
+          <label>Nouveau mot de passe
+            <input type="password" id="new-password" placeholder="Min. 4 caractères" autocomplete="new-password" />
+          </label>
+          <label>Confirmer
+            <input type="password" id="confirm-password" placeholder="Répéter le mot de passe" autocomplete="new-password" />
+          </label>
+          <div class="row">
+            <button class="primary" type="submit">Changer le mot de passe</button>
+          </div>
+          <p id="password-status" class="muted" style="min-height:18px"></p>
+        </form>
+      </section>
+
     </main>
 
+        <script src="./assets/js/auth.js"></script>
     <script src="./assets/js/data.js"></script>
     <script>
       const form = document.querySelector("#config-form");
@@ -155,7 +174,31 @@
         refreshCompetitionList();
       }
 
-      bootstrapCloud();
+      // ── Changement de mot de passe ────────────────────────────
+      document.querySelector("#password-form")?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const np  = document.querySelector("#new-password").value;
+        const cp  = document.querySelector("#confirm-password").value;
+        const st  = document.querySelector("#password-status");
+        if (np !== cp) { st.style.color = "var(--danger)"; st.textContent = "Les mots de passe ne correspondent pas."; return; }
+        try {
+          await AthxAuth.changePassword(np);
+          st.style.color = "var(--ok)";
+          st.textContent = "✓ Mot de passe mis à jour.";
+          document.querySelector("#new-password").value = "";
+          document.querySelector("#confirm-password").value = "";
+          setTimeout(() => { st.textContent = ""; }, 4000);
+        } catch (err) {
+          st.style.color = "var(--danger)";
+          st.textContent = err.message;
+        }
+      });
+
+      // ── Auth ──────────────────────────────────────────────────
+      AthxAuth.requireAuth({ onSuccess: () => {
+        bootstrapCloud();
+        injectLogoutBtn();
+      }});
     </script>
   </body>
 </html>
