@@ -66,7 +66,7 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
 
 /* Slide 0 : vue globale */
 #slide-overview {
-  grid-template-rows: 1fr clamp(100px,14vh,140px);
+  grid-template-rows: 1fr clamp(115px,16vh,155px);
 }
 
 /* Slide 1 : résultats */
@@ -475,7 +475,7 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
 .tl-now-txt { font-family:var(--mono); font-size:clamp(10px,.9vw,13px); color:var(--volt); font-weight:700; }
 .tl-scroll {
   flex:1; display:flex; gap:clamp(5px,.5vw,8px); padding:clamp(5px,.7vh,8px) clamp(16px,1.8vw,24px);
-  overflow-x:auto; align-items:stretch; min-height:0;
+  overflow-x:auto; align-items:flex-start; min-height:0;
 }
 .tl-scroll::-webkit-scrollbar { height:2px; }
 
@@ -494,12 +494,12 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
 
 /* Departure cards */
 .dep-card {
-  flex-shrink:0; width:clamp(120px,12vw,170px);
+  flex-shrink:0; width:clamp(130px,13vw,180px);
   background:var(--card); border:1px solid rgba(255,255,255,.06);
   border-top:2px solid var(--dc,#444);
-  border-radius:8px; padding:clamp(5px,.7vh,9px) clamp(8px,.8vw,12px);
+  border-radius:8px; padding:clamp(6px,.8vh,10px) clamp(8px,.8vw,12px);
   display:flex; flex-direction:column; gap:2px;
-  position:relative; overflow:hidden; transition:border-color .3s;
+  position:relative; transition:border-color .3s;
 }
 .dep-card.soon { border-top-color:var(--dc); border-color:color-mix(in srgb,var(--dc) 35%,transparent); }
 .dep-card.soon .dep-time { animation:pDot .8s ease-in-out infinite; }
@@ -1123,7 +1123,7 @@ function renderTimeline(state){
 
     const athsHtml=e.athletes.map(a=>`
       <div class="dep-ath">
-        <div class="dep-ath-name">${(a.lastName||a.name||'').toUpperCase()}</div>
+        <div class="dep-ath-name">${(a.lastName||a.name||'').toUpperCase()}${a.firstName?' <span style="opacity:.65;font-weight:600">'+a.firstName.charAt(0)+'.</span>':''}</div>
         <span class="dep-cat ${catCls(a.category)}">${a.category}</span>
       </div>`).join('');
 
