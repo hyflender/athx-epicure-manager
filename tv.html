@@ -328,69 +328,94 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
   overflow-y:auto; min-height:0; align-content:start;
 }
 
-/* Zone inactive : ligne compacte — span 1 colonne */
+/* Zone inactive : ligne ultra compacte (transition vide = cachée via JS) */
 .zone-row {
-  background:var(--card); border:1px solid var(--border); border-radius:8px;
-  display:flex; align-items:center; gap:clamp(8px,.8vw,14px);
-  padding:clamp(8px,1vh,14px) clamp(10px,1vw,18px); overflow:hidden;
+  background:rgba(255,255,255,.025); border:1px solid rgba(255,255,255,.07); border-radius:6px;
+  display:flex; align-items:center; gap:clamp(7px,.7vw,12px);
+  padding:clamp(6px,.7vh,10px) clamp(10px,1vw,16px); overflow:hidden;
+  opacity:.6;
 }
-.zone-row-icon { font-size:clamp(14px,1.4vw,20px); flex-shrink:0; opacity:.55; }
-.zone-row-num  { font-size:clamp(8px,.7vw,11px); font-family:var(--mono); font-weight:700; letter-spacing:.08em; color:var(--faint); flex-shrink:0; }
-.zone-row-name { font-size:clamp(11px,1.1vw,16px); font-weight:800; text-transform:uppercase; letter-spacing:.02em; color:var(--muted); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.zbadge { font-size:clamp(7px,.65vw,10px); font-family:var(--mono); font-weight:700; letter-spacing:.05em; padding:2px 7px; border-radius:20px; text-transform:uppercase; flex-shrink:0; }
+.zone-row-icon { font-size:clamp(12px,1.2vw,17px); flex-shrink:0; }
+.zone-row-num  { font-size:clamp(7px,.6vw,9px); font-family:var(--mono); font-weight:700; letter-spacing:.08em; color:var(--faint); flex-shrink:0; }
+.zone-row-name { font-size:clamp(10px,1vw,14px); font-weight:800; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.zbadge { font-size:clamp(7px,.6vw,9px); font-family:var(--mono); font-weight:700; letter-spacing:.05em; padding:1px 6px; border-radius:20px; text-transform:uppercase; flex-shrink:0; }
 .zbadge-scored   { background:var(--volt-dim); color:var(--volt); border:1px solid rgba(198,255,0,.2); }
-.zbadge-unscored { background:rgba(255,255,255,.04); color:var(--faint); border:1px solid var(--border); }
-.zone-row-dur { font-size:clamp(8px,.7vw,11px); color:var(--faint); font-family:var(--mono); margin-left:2px; flex-shrink:0; }
+.zbadge-unscored { background:rgba(255,255,255,.03); color:var(--faint); border:1px solid rgba(255,255,255,.06); }
+.zone-row-dur { font-size:clamp(7px,.65vw,10px); color:var(--faint); font-family:var(--mono); flex-shrink:0; }
 
 /* Zone active : carte expandée — span 2 colonnes */
 .zone-card {
   grid-column: 1 / -1;
   background:var(--card); border:1px solid var(--zc, #555);
-  border-radius:12px; flex-shrink:0;
-  box-shadow:0 0 40px rgba(0,0,0,.6), inset 0 0 0 1px color-mix(in srgb, var(--zc,#555) 40%, transparent);
+  border-left:4px solid var(--zc, #555);
+  border-radius:10px; flex-shrink:0;
+  box-shadow:0 0 30px rgba(0,0,0,.5), 0 0 60px color-mix(in srgb,var(--zc,transparent) 8%,transparent);
   overflow:hidden;
 }
+
+/* Header zone : icône | nom | badge · timer à droite */
 .zone-card-header {
-  display:flex; align-items:center; gap:clamp(10px,1.2vw,18px);
-  padding:clamp(10px,1.2vh,16px) clamp(14px,1.4vw,22px); border-bottom:1px solid rgba(255,255,255,.06);
+  display:flex; align-items:center; gap:clamp(10px,1.2vw,16px);
+  padding:clamp(8px,1vh,13px) clamp(12px,1.2vw,18px);
+  background:color-mix(in srgb, var(--zc,transparent) 7%, #111);
   position:relative;
-  background:color-mix(in srgb, var(--zc,transparent) 5%, transparent);
 }
 .zone-card-icon {
-  width:clamp(36px,4vh,52px); height:clamp(36px,4vh,52px); border-radius:10px; flex-shrink:0;
-  display:flex; align-items:center; justify-content:center; font-size:clamp(18px,2vh,26px);
+  width:clamp(32px,3.5vh,46px); height:clamp(32px,3.5vh,46px); border-radius:8px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; font-size:clamp(16px,1.8vh,24px);
+  background:color-mix(in srgb,var(--zc) 18%,transparent);
+  border:1px solid color-mix(in srgb,var(--zc) 30%,transparent);
 }
-.zone-card-num  { font-size:clamp(9px,.8vw,11px); font-family:var(--mono); font-weight:700; letter-spacing:.08em; color:var(--muted); }
-.zone-card-name { font-size:clamp(15px,1.7vw,22px); font-weight:900; text-transform:uppercase; letter-spacing:.03em; margin-top:2px; }
-.zone-card-meta { margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
-.zone-card-dur  { font-size:clamp(9px,.8vw,12px); color:var(--muted); font-family:var(--mono); }
-.zone-prog      { position:absolute; bottom:0; left:0; right:0; height:3px; background:rgba(255,255,255,.05); }
-.zone-prog-fill { height:100%; background:var(--zc); transition:width 1s linear; }
-.zone-prog-label{ position:absolute; right:0; top:-18px; font-size:clamp(9px,.8vw,11px); font-family:var(--mono); color:var(--muted); }
+.zone-card-info { flex:1; min-width:0; }
+.zone-card-num  { font-size:clamp(8px,.7vw,10px); font-family:var(--mono); font-weight:700; letter-spacing:.1em; color:color-mix(in srgb,var(--zc) 60%,var(--muted)); text-transform:uppercase; }
+.zone-card-name { font-size:clamp(14px,1.6vw,21px); font-weight:900; text-transform:uppercase; letter-spacing:.04em; line-height:1.1; }
+.zone-card-meta { display:flex; align-items:center; gap:clamp(6px,.8vw,10px); margin-left:auto; }
+.zone-card-dur  { font-size:clamp(9px,.8vw,11px); color:var(--muted); font-family:var(--mono); }
+
+/* Timer restant — encadré proéminent à droite */
+.zone-timer {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.35); border:1px solid color-mix(in srgb,var(--zc) 25%,transparent);
+  border-radius:8px; padding:clamp(4px,.5vh,7px) clamp(10px,1.2vw,16px);
+  flex-shrink:0;
+}
+.zone-timer-val {
+  font-family:var(--mono); font-size:clamp(16px,2vw,26px); font-weight:900;
+  color:var(--zc); line-height:1; letter-spacing:.04em;
+}
+.zone-timer-lbl {
+  font-size:clamp(7px,.6vw,9px); font-family:var(--mono); color:var(--muted);
+  text-transform:uppercase; letter-spacing:.12em; margin-top:1px;
+}
+
+/* Barre de progression — fine, sous le header */
+.zone-prog      { height:2px; background:rgba(255,255,255,.06); }
+.zone-prog-fill { height:100%; background:var(--zc); transition:width 1s linear;
+  box-shadow:0 0 8px var(--zc); }
 
 /* Athletes grid */
-.zone-athletes { display:grid; grid-template-columns:repeat(auto-fill,minmax(clamp(180px,18vw,280px),1fr)); gap:clamp(6px,.7vh,10px); padding:clamp(10px,1.2vh,14px) clamp(12px,1.2vw,20px) clamp(12px,1.4vh,18px); }
+.zone-athletes { display:grid; grid-template-columns:repeat(auto-fill,minmax(clamp(160px,17vw,260px),1fr)); gap:clamp(5px,.6vh,9px); padding:clamp(8px,1vh,12px) clamp(10px,1.1vw,16px) clamp(10px,1.2vh,14px); }
 .ath-chip {
-  display:flex; align-items:center; gap:clamp(8px,1vw,14px);
-  background:rgba(255,255,255,.04); border:1px solid color-mix(in srgb,var(--zc) 30%,transparent);
-  border-radius:8px; padding:clamp(8px,1vh,14px) clamp(10px,1vw,16px);
+  display:flex; align-items:center; gap:clamp(8px,.9vw,12px);
+  background:rgba(255,255,255,.04); border:1px solid color-mix(in srgb,var(--zc) 25%,transparent);
+  border-radius:8px; padding:clamp(8px,.9vh,12px) clamp(10px,1vw,14px);
 }
 .ath-chip-info { flex:1; min-width:0; }
 .ath-chip-name {
-  font-size:clamp(14px,1.6vw,22px); font-weight:800; line-height:1.15;
+  font-size:clamp(13px,1.5vw,20px); font-weight:800; line-height:1.15;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .ath-chip-name em { font-style:normal; font-weight:500; opacity:.75; font-size:.85em; }
-.ath-chip-sub { display:flex; align-items:center; gap:6px; margin-top:4px; }
+.ath-chip-sub { display:flex; align-items:center; gap:6px; margin-top:3px; }
 .ath-chip-cat {
-  font-size:clamp(7px,.65vw,10px); font-weight:700; font-family:var(--mono);
+  font-size:clamp(7px,.62vw,9px); font-weight:700; font-family:var(--mono);
   padding:2px 6px; border-radius:8px; text-transform:uppercase;
 }
 .cc-lite { background:rgba(96,165,250,.15); color:#60A5FA; }
 .cc-athx { background:var(--volt-dim); color:var(--volt); }
 .cc-pro  { background:rgba(255,107,107,.15); color:#FF6B6B; }
-.ath-chip-heat { font-size:clamp(9px,.8vw,12px); color:var(--muted); font-family:var(--mono); }
-.ath-chip-score { font-family:var(--mono); font-size:clamp(16px,1.8vw,24px); font-weight:800; flex-shrink:0; text-align:right; }
+.ath-chip-heat { font-size:clamp(9px,.8vw,11px); color:var(--muted); font-family:var(--mono); }
+.ath-chip-score { font-family:var(--mono); font-size:clamp(15px,1.7vw,22px); font-weight:800; flex-shrink:0; text-align:right; }
 
 /* ── LEADERBOARD ─────────────────────────────────────────────────── */
 #lb-panel {
@@ -747,6 +772,10 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
       <div class="slide-tab"        id="tab1"><div class="slide-tab-dot"></div>Résultats</div>
     </div>
     <div class="hdr-sync" id="hdrSync"></div>
+    <div style="display:flex;align-items:center;gap:6px;margin-right:clamp(10px,1.2vw,18px);flex-shrink:0">
+      <div class="live-dot" style="width:8px;height:8px"></div>
+      <span style="font-size:clamp(9px,.8vw,11px);font-family:var(--mono);font-weight:800;color:#FF4444;letter-spacing:.12em">LIVE</span>
+    </div>
     <div class="hdr-clock" id="hdrClock">--:--:--</div>
     <div class="hdr-fs" id="fsBtn" title="Plein écran">⛶</div>
     <div class="hdr-fs" id="testBtn" title="Tester le décompte" style="margin-left:6px;font-size:13px">▶</div>
@@ -934,24 +963,31 @@ function renderZones(state){
     const meta=ZM[ev.id]||{color:'#888',icon:'📍',label:ev.name};
     const here=zm[ev.id]||[];
     const active=here.length>0;
+
+    // Cacher les zones de transition (non scorées) quand elles sont vides
+    if(!active && !ev.scored) return '';
+
     const badge=`<span class="zbadge ${ev.scored?'zbadge-scored':'zbadge-unscored'}">${ev.scored?'Scorée':'Transition'}</span>`;
 
     if(!active){
-      // Ligne compacte
+      // Ligne compacte (zones scorées en attente uniquement)
       return `
         <div class="zone-row">
           <span class="zone-row-icon">${meta.icon}</span>
-          <span class="zone-row-num">Z${ev.zone}</span>
-          <span class="zone-row-name">${meta.label}</span>
+          <span class="zone-row-name" style="color:${meta.color}88">${meta.label}</span>
           ${badge}
           <span class="zone-row-dur">${ev.durationMinutes} min</span>
         </div>`;
     }
 
-    // Carte expandée
-    const pct=Math.min(100,(here[0].elapsed/ev.durationMinutes)*100);
-    const remMin=Math.ceil(here[0].remaining);
-    const remSec=Math.floor((here[0].remaining%1)*60);
+    // Carte expandée — active
+    const totalSec = ev.durationMinutes * 60;
+    const elapsedSec = here[0].elapsed * 60;
+    const remTotalSec = Math.max(0, Math.round(here[0].remaining * 60));
+    const remM = Math.floor(remTotalSec / 60);
+    const remS = remTotalSec % 60;
+    const pct = Math.min(100, (elapsedSec / totalSec) * 100);
+    const timerColor = remTotalSec <= 120 ? '#FF4444' : remTotalSec <= 300 ? '#FF9500' : meta.color;
 
     const chips=here.map(({athlete,heat,score})=>{
       const sc=fmtScore(score,ev);
@@ -963,30 +999,31 @@ function renderZones(state){
             <div class="ath-chip-name">${ln}${fn?` <em>${fn}</em>`:''}</div>
             <div class="ath-chip-sub">
               <span class="ath-chip-cat ${catCls(athlete.category)}">${athlete.category}</span>
-              <span class="ath-chip-heat">${athlete.gender} · Heat ${heat}</span>
+              <span class="ath-chip-heat">${athlete.gender} · H${heat}</span>
             </div>
           </div>
-          <div class="ath-chip-score" style="color:${sc?meta.color:'var(--faint)'}">${sc||'—'}</div>
+          <div class="ath-chip-score" style="color:${sc?timerColor:'var(--faint)'}">${sc||'—'}</div>
         </div>`;
     }).join('');
 
     return `
       <div class="zone-card" style="--zc:${meta.color}">
         <div class="zone-card-header">
-          <div class="zone-card-icon" style="background:${meta.color}18;border:1px solid ${meta.color}30">${meta.icon}</div>
-          <div>
+          <div class="zone-card-icon">${meta.icon}</div>
+          <div class="zone-card-info">
             <div class="zone-card-num">ZONE ${ev.zone}</div>
             <div class="zone-card-name" style="color:${meta.color}">${meta.label}</div>
           </div>
           <div class="zone-card-meta">
             ${badge}
-            <span class="zone-card-dur">${ev.durationMinutes} min${ev.timeCapMinutes?' · cap '+ev.timeCapMinutes+' min':''}</span>
+            <span class="zone-card-dur">${ev.durationMinutes} min</span>
           </div>
-          <div class="zone-prog">
-            <div class="zone-prog-fill" style="width:${pct.toFixed(1)}%"></div>
-            <div class="zone-prog-label">${pad(remMin)}:${pad(remSec)} restantes</div>
+          <div class="zone-timer">
+            <div class="zone-timer-val" style="color:${timerColor}">${pad(remM)}:${pad(remS)}</div>
+            <div class="zone-timer-lbl">restant</div>
           </div>
         </div>
+        <div class="zone-prog"><div class="zone-prog-fill" style="width:${pct.toFixed(1)}%"></div></div>
         <div class="zone-athletes">${chips}</div>
       </div>`;
   }).join('');
@@ -1005,6 +1042,15 @@ function renderLeaderboard(state){
     groups[k].push(r);
   });
 
+  // Construire une map "qui est en zone actuellement"
+  const nm=nowMin();
+  const zm=getZoneMap(state,nm);
+  const inZone={}; // teamId -> {color, icon}
+  Object.entries(zm).forEach(([evId,entries])=>{
+    const meta=ZM[evId];
+    entries.forEach(({athlete})=>{ inZone[athlete.id]={color:meta?.color||'#888',icon:meta?.icon||'•',label:meta?.label||''}; });
+  });
+
   document.getElementById('lbScroll').innerHTML=ORDER.filter(k=>groups[k]?.length).map(k=>{
     const [cat,gend]=k.split('|');
     const col=catColor(cat);
@@ -1016,21 +1062,27 @@ function renderLeaderboard(state){
         const er=r.eventRanks.find(x=>x.eventId===ev.id);
         return `<span title="${ev.name}">${ZM[ev.id]?.icon||'•'} ${er?.rank!=null?'#'+er.rank:'—'}</span>`;
       }).join('');
+      // Indicateur de zone courante
+      const zone=inZone[r.team.id];
+      const zoneBadge=zone
+        ? `<span style="font-size:clamp(8px,.75vw,11px);color:${zone.color};font-family:var(--mono);margin-left:auto;padding:1px 6px;border:1px solid ${zone.color}44;border-radius:4px;white-space:nowrap;flex-shrink:0">${zone.icon}</span>`
+        : '';
       return `
         <div class="lb-row">
           <div class="lb-pos ${pc}">${medal}</div>
           <div class="lb-row-name">
-            <div class="lb-row-last">${(r.team.lastName||r.team.name||'').toUpperCase()} <span style="font-weight:400;opacity:.65">${r.team.firstName||''}</span></div>
+            <div class="lb-row-last">${(r.team.lastName||r.team.name||'').toUpperCase()} <span style="font-weight:400;opacity:.6;font-size:.85em">${r.team.firstName||''}</span></div>
             <div class="lb-row-evs">${detail}</div>
           </div>
-          <div class="lb-score ${scored?'':'none'}">${scored?r.total+'<small style="font-size:8px;color:var(--muted);margin-left:2px">pts</small>':'—'}</div>
+          ${zoneBadge}
+          <div class="lb-score ${scored?'':'none'}" style="margin-left:${zone?'6px':'auto'}">${scored?r.total+'<small style="font-size:clamp(7px,.6vw,9px);color:var(--muted);margin-left:2px">pts</small>':'—'}</div>
         </div>`;
     }).join('');
     return `
       <div class="lb-group">
         <div class="lb-group-hdr">
           <span class="lb-group-pill" style="color:${col};border-color:${col}40;background:${col}10">${cat}</span>
-          <span style="font-size:11px;color:var(--muted);margin-left:4px">${gend}</span>
+          <span style="font-size:clamp(9px,.85vw,12px);color:var(--muted);margin-left:4px">${gend}</span>
           <span class="lb-group-count">${groups[k].length}</span>
         </div>
         ${rows}
