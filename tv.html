@@ -1110,187 +1110,177 @@ function renderTimeline(state){
 }
 
 /* ── RENDER RESULTS SLIDE ──────────────────────────────────────── */
+/* ── Score pill builder (hors renderResults pour éviter les closures imbriquées) ── */
+function _buildScorePill(sc, er, ev, zm, isBest, compact){
+  if(!sc){
+    if(compact) return '<div class="res-extra-pill" style="opacity:.3">'+zm.icon+' \u2014</div>';
+    return '<div class="res-score-pill">'
+      +'<span class="res-pill-icon" style="opacity:.3">'+zm.icon+'</span>'
+      +'<div class="res-pill-body">'
+        +'<span class="res-pill-lbl">'+zm.label+'</span>'
+        +'<span class="res-pill-val" style="color:var(--faint)">\u2014</span>'
+      +'</div></div>';
+  }
+  if(sc.dnf){
+    if(compact) return '<div class="res-extra-pill" style="border-color:#FF444440;color:#FF4444">'+zm.icon+' DNF</div>';
+    return '<div class="res-score-pill'+(isBest?' best':'')+'"><span class="res-pill-icon">'+zm.icon+'</span>'
+      +'<div class="res-pill-body"><span class="res-pill-lbl">'+zm.label+'</span>'
+      +'<span class="res-pill-val" style="color:#FF4444">DNF</span></div></div>';
+  }
+  // Format value
+  var val = sc.rawValue!=null ? sc.rawValue : sc.performance;
+  var subLabel = '';
+  if(ev.timeCap && sc.timeCapped){
+    var reps = sc.reps != null ? sc.reps : (100000 - Number(sc.rawValue));
+    val = '+'+reps; subLabel = 'TIME CAP';
+  } else if(ev.scoreUnit==='s'){
+    var v = AthxStore.parseScoreValue(String(sc.rawValue!=null?sc.rawValue:sc.performance||''));
+    if(v!=null) val = pad(v/60)+':'+pad(v%60);
+  } else if(val!=null && val!==''){
+    val = String(val)+(ev.scoreUnit?' '+ev.scoreUnit:'');
+  }
+  var col  = isBest ? zm.color : 'var(--text)';
+  var rank = er && er.rank!=null ? '#'+er.rank : '';
+  var lbl  = zm.label+(subLabel?' \u00b7 '+subLabel:'');
+  var lblStyle = isBest ? 'color:'+zm.color : '';
+  if(compact){
+    var pillStyle = isBest ? 'border-color:'+zm.color+'44;color:'+zm.color : '';
+    var rankSpan  = rank ? '<span style="opacity:.5;font-size:10px">'+rank+'</span>' : '';
+    return '<div class="res-extra-pill" style="'+pillStyle+'">'+zm.icon+' '+val+' '+rankSpan+'</div>';
+  }
+  var rankLine = rank ? '<span class="res-pill-rank">'+rank+(isBest?' \u2605':'')+'</span>' : '';
+  return '<div class="res-score-pill'+(isBest?' best':'')+'"><span class="res-pill-icon">'+zm.icon+'</span>'
+    +'<div class="res-pill-body">'
+      +'<span class="res-pill-lbl" style="'+lblStyle+'">'+lbl+'</span>'
+      +'<span class="res-pill-val" style="color:'+col+'">'+val+'</span>'
+      +rankLine
+    +'</div></div>';
+}
+
 function renderResults(state){
-  const ranking   = AthxStore.getRanking(state);
-  const scoredEvs = state.events.filter(e=>e.scored).sort((a,b)=>a.order-b.order);
-  const ORDER = ['Lite|Femme','Lite|Homme','ATHX|Femme','ATHX|Homme','Pro|Femme','Pro|Homme'];
-  const groups={};
-  ORDER.forEach(k=>{ groups[k]=[]; });
-  ranking.forEach(r=>{
-    const k=`${r.team.category}|${r.team.gender}`;
+  var ranking   = AthxStore.getRanking(state);
+  var scoredEvs = state.events.filter(function(e){ return e.scored; }).sort(function(a,b){ return a.order-b.order; });
+  var ORDER = ['Lite|Femme','Lite|Homme','ATHX|Femme','ATHX|Homme','Pro|Femme','Pro|Homme'];
+  var groups={};
+  ORDER.forEach(function(k){ groups[k]=[]; });
+  ranking.forEach(function(r){
+    var k = r.team.category+'|'+r.team.gender;
     if(groups[k]) groups[k].push(r);
   });
 
-  const bestRank={};
-  ORDER.forEach(k=>{
+  var bestRank={};
+  ORDER.forEach(function(k){
     bestRank[k]={};
-    scoredEvs.forEach(ev=>{
-      const ranks=groups[k].map(r=>r.eventRanks.find(x=>x.eventId===ev.id)?.rank).filter(x=>x!=null);
-      if(ranks.length) bestRank[k][ev.id]=Math.min(...ranks);
+    scoredEvs.forEach(function(ev){
+      var ranks=groups[k].map(function(r){ var er=r.eventRanks.find(function(x){ return x.eventId===ev.id; }); return er?er.rank:null; }).filter(function(x){ return x!=null; });
+      if(ranks.length) bestRank[k][ev.id]=Math.min.apply(null,ranks);
     });
   });
 
-  const MEDALS      = ['🥇','🥈','🥉'];
-  const MEDAL_COLS  = ['#FFD700','#C0C0C0','#CD7F32'];
-  const RANK_CLS    = ['rank-1','rank-2','rank-3'];
-  const CAT_ICONS   = { Lite:'⚡', ATHX:'🔥', Pro:'💎' };
+  var MEDALS     = ['&#129351;','&#129352;','&#129353;']; // 🥇🥈🥉
+  var MEDAL_COLS = ['#FFD700','#C0C0C0','#CD7F32'];
+  var RANK_CLS   = ['rank-1','rank-2','rank-3'];
+  var CAT_ICONS  = { Lite:'&#9889;', ATHX:'&#128293;', Pro:'&#128142;' }; // ⚡🔥💎
 
-  // ── Helper : score pill for a single event ──────────────────
-  function scorePill(r, ev, isBest, compact=false){
-    const sc  = state.scores.find(s=>s.teamId===r.team.id&&s.eventId===ev.id);
-    const er  = r.eventRanks.find(x=>x.eventId===ev.id);
-    const zm  = ZM[ev.id]||{icon:'•',color:'#888',label:'?'};
+  var sections = ORDER.filter(function(k){ return groups[k] && groups[k].length; }).map(function(k){
+    var parts   = k.split('|');
+    var cat     = parts[0], gend = parts[1];
+    var col     = catColor(cat);
+    var icon    = CAT_ICONS[cat]||'';
+    var list    = groups[k];
+    var totalSc = list.filter(function(r){ return r.scoredCount>0; }).length;
 
-    if(!sc){
-      if(compact) return `<div class="res-extra-pill" style="opacity:.3">${zm.icon} —</div>`;
-      return `<div class="res-score-pill">
-        <span class="res-pill-icon" style="opacity:.3">${zm.icon}</span>
-        <div class="res-pill-body">
-          <span class="res-pill-lbl">${zm.label}</span>
-          <span class="res-pill-val" style="color:var(--faint)">—</span>
-        </div>
-      </div>`;
-    }
-    if(sc.dnf){
-      if(compact) return `<div class="res-extra-pill" style="border-color:#FF444440;color:#FF4444">${zm.icon} DNF</div>`;
-      return `<div class="res-score-pill${isBest?' best':''}">
-        <span class="res-pill-icon">${zm.icon}</span>
-        <div class="res-pill-body">
-          <span class="res-pill-lbl">${zm.label}</span>
-          <span class="res-pill-val" style="color:#FF4444">DNF</span>
-        </div>
-      </div>`;
-    }
+    // Header
+    var hdr = '<div class="res-cat-hdr">'
+      +'<div class="res-cat-stripe" style="background:'+col+'"></div>'
+      +'<div class="res-cat-body">'
+        +'<span class="res-cat-icon">'+icon+'</span>'
+        +'<span class="res-cat-name" style="color:'+col+'">'+cat+'</span>'
+        +'<span class="res-cat-gend">'+gend+'</span>'
+        +'<span class="res-cat-count">'+list.length+' athl\u00e8tes</span>'
+        +'<span class="res-cat-scored">'+totalSc+'/'+scoredEvs.length+' zones scor\u00e9es</span>'
+      +'</div></div>';
 
-    // Valeur formatée
-    let val = sc.rawValue??sc.performance;
-    let subLabel = '';
-    if(ev.timeCap && sc.timeCapped){
-      const reps = sc.reps ?? (100000 - Number(sc.rawValue));
-      val = `+${reps}`;
-      subLabel = 'TIME CAP';
-    } else if(ev.scoreUnit==='s'){
-      const v=AthxStore.parseScoreValue(String(sc.rawValue??sc.performance||''));
-      if(v!=null) val=`${pad(v/60)}:${pad(v%60)}`;
-    } else if(val!=null&&val!==''){
-      val=String(val)+(ev.scoreUnit?' '+ev.scoreUnit:'');
-    }
-    const col  = isBest ? zm.color : 'var(--text)';
-    const rank = er?.rank!=null ? `#${er.rank}` : '';
+    // Podium cards
+    var podiumGroup = list.slice(0,3);
+    var extraGroup  = list.slice(3);
 
-    if(compact) return `<div class="res-extra-pill" style="${isBest?`border-color:${zm.color}44;color:${zm.color}`:''}">
-      ${zm.icon} ${val} ${rank?`<span style="opacity:.5;font-size:10px">${rank}</span>`:''}
-    </div>`;
+    var cards = podiumGroup.map(function(r,i){
+      var scored     = r.scoredCount>0;
+      var rankCls    = (scored && i<3) ? RANK_CLS[i] : '';
+      var stripeCol  = (scored && i<3) ? MEDAL_COLS[i] : col+'55';
+      var medHtml    = (scored && i<3) ? '<span class="res-card-medal">'+MEDALS[i]+'</span>' : '<span class="res-card-rank-num">'+(i+1)+'</span>';
+      var totalCol   = scored ? (i===0?'#FFD700':i===1?'#C0C0C0':i===2?'#CD7F32':'var(--volt)') : 'var(--faint)';
 
-    return `<div class="res-score-pill${isBest?' best':''}">
-      <span class="res-pill-icon">${zm.icon}</span>
-      <div class="res-pill-body">
-        <span class="res-pill-lbl" style="${isBest?`color:${zm.color}`:''}">${zm.label}${subLabel?' · '+subLabel:''}</span>
-        <span class="res-pill-val" style="color:${col}">${val}</span>
-        ${rank?`<span class="res-pill-rank">${rank}${isBest?' 🏆':''}</span>`:''}
-      </div>
-    </div>`;
-  }
+      var pills = scoredEvs.map(function(ev){
+        var sc   = state.scores.find(function(s){ return s.teamId===r.team.id&&s.eventId===ev.id; });
+        var er   = r.eventRanks.find(function(x){ return x.eventId===ev.id; });
+        var zm   = ZM[ev.id]||{icon:'•',color:'#888',label:'?'};
+        var best = er && er.rank!=null && er.rank===bestRank[k][ev.id];
+        return _buildScorePill(sc||null, er||null, ev, zm, best, false);
+      }).join('');
 
-  // ── Build each section ────────────────────────────────────────
-  const html = ORDER.filter(k=>groups[k]?.length).map(k=>{
-    const [cat,gend] = k.split('|');
-    const col  = catColor(cat);
-    const icon = CAT_ICONS[cat]||'•';
-    const list = groups[k];
-    const totalScored = list.filter(r=>r.scoredCount>0).length;
+      var dots = scoredEvs.map(function(ev){
+        var sc = state.scores.find(function(s){ return s.teamId===r.team.id&&s.eventId===ev.id; });
+        var zm = ZM[ev.id]||{icon:'•'};
+        return '<span class="res-card-ev-dot" style="opacity:'+(sc?'1':'.2')+'">'+zm.icon+'</span>';
+      }).join('');
 
-    // Category header
-    const hdrHtml = `
-      <div class="res-cat-hdr">
-        <div class="res-cat-stripe" style="background:${col}"></div>
-        <div class="res-cat-body">
-          <span class="res-cat-icon">${icon}</span>
-          <span class="res-cat-name" style="color:${col}">${cat}</span>
-          <span class="res-cat-gend">${gend}</span>
-          <span class="res-cat-count">${list.length} athlètes</span>
-          <span class="res-cat-scored">${totalScored}/${scoredEvs.length} zones scorées</span>
-        </div>
-      </div>`;
+      return '<div class="res-card '+rankCls+'">'
+        +'<div class="res-card-stripe" style="background:'+stripeCol+'"></div>'
+        +'<div class="res-card-hdr">'+medHtml
+          +'<div class="res-card-name">'
+            +'<div class="res-card-last">'+((r.team.lastName||r.team.name||'').toUpperCase())+'</div>'
+            +'<div class="res-card-first">'+(r.team.firstName||'')+'</div>'
+          +'</div>'
+        +'</div>'
+        +'<div class="res-card-scores">'+pills+'</div>'
+        +'<div class="res-card-footer">'
+          +'<div>'
+            +'<div class="res-card-total-val" style="color:'+totalCol+'">'+(scored?r.total:'\u2014')+'</div>'
+            +'<div class="res-card-total-lbl">'+(scored?'points':'')+'</div>'
+          +'</div>'
+          +'<div class="res-card-complete">'+dots+'</div>'
+        +'</div>'
+        +'</div>';
+    }).join('');
 
-    // Podium cards (top 3 or all if <= 3)
-    const podiumGroup = list.slice(0,3);
-    const extraGroup  = list.slice(3);
-
-    const podiumHtml = `<div class="res-podium">
-      ${podiumGroup.map((r,i)=>{
-        const scored   = r.scoredCount>0;
-        const rankCls  = scored&&i<3 ? RANK_CLS[i] : '';
-        const stripeCol= scored&&i<3 ? MEDAL_COLS[i] : col+'55';
-        const medHtml  = scored&&i<3
-          ? `<span class="res-card-medal">${MEDALS[i]}</span>`
-          : `<span class="res-card-rank-num">${i+1}</span>`;
-        const totalCol = scored&&i===0 ? '#FFD700' : scored&&i===1 ? '#C0C0C0' : scored&&i===2 ? '#CD7F32' : 'var(--volt)';
-        const pills    = scoredEvs.map(ev=>{
-          const er   = r.eventRanks.find(x=>x.eventId===ev.id);
-          const best = er?.rank!=null && er.rank===bestRank[k][ev.id];
-          return scorePill(r,ev,best,false);
-        }).join('');
-        const completeDots = scoredEvs.map(ev=>{
-          const sc=state.scores.find(s=>s.teamId===r.team.id&&s.eventId===ev.id);
-          const zm=ZM[ev.id]||{icon:'•'};
-          return `<span class="res-card-ev-dot" style="opacity:${sc?'1':'.2'}">${zm.icon}</span>`;
-        }).join('');
-        return `
-          <div class="res-card ${rankCls}">
-            <div class="res-card-stripe" style="background:${stripeCol}"></div>
-            <div class="res-card-hdr">
-              ${medHtml}
-              <div class="res-card-name">
-                <div class="res-card-last">${(r.team.lastName||r.team.name||'').toUpperCase()}</div>
-                <div class="res-card-first">${r.team.firstName||''}</div>
-              </div>
-            </div>
-            <div class="res-card-scores">${pills}</div>
-            <div class="res-card-footer">
-              <div>
-                <div class="res-card-total-val" style="color:${scored?totalCol:'var(--faint)'}">
-                  ${scored?r.total:'—'}
-                </div>
-                <div class="res-card-total-lbl">${scored?'points':''}</div>
-              </div>
-              <div class="res-card-complete">${completeDots}</div>
-            </div>
-          </div>`;
-      }).join('')}
-    </div>`;
+    var podiumHtml = '<div class="res-podium">'+cards+'</div>';
 
     // Extra rows (4th+)
-    const extrasHtml = extraGroup.length ? `<div class="res-extras">
-      ${extraGroup.map((r,i)=>{
-        const pos    = i+4;
-        const scored = r.scoredCount>0;
-        const pills  = scoredEvs.map(ev=>{
-          const er   = r.eventRanks.find(x=>x.eventId===ev.id);
-          const best = er?.rank!=null && er.rank===bestRank[k][ev.id];
-          return scorePill(r,ev,best,true);
+    var extrasHtml = '';
+    if(extraGroup.length){
+      var rows = extraGroup.map(function(r,i){
+        var pos    = i+4;
+        var scored = r.scoredCount>0;
+        var pills  = scoredEvs.map(function(ev){
+          var sc   = state.scores.find(function(s){ return s.teamId===r.team.id&&s.eventId===ev.id; });
+          var er   = r.eventRanks.find(function(x){ return x.eventId===ev.id; });
+          var zm   = ZM[ev.id]||{icon:'•',color:'#888',label:'?'};
+          var best = er && er.rank!=null && er.rank===bestRank[k][ev.id];
+          return _buildScorePill(sc||null, er||null, ev, zm, best, true);
         }).join('');
-        return `
-          <div class="res-extra-row">
-            <div class="res-extra-rank">${pos}</div>
-            <div class="res-extra-name">
-              <div class="res-extra-last">${(r.team.lastName||r.team.name||'').toUpperCase()}</div>
-              <div class="res-extra-first">${r.team.firstName||''}</div>
-            </div>
-            <div class="res-extra-pills">${pills}</div>
-            <div class="res-extra-total" style="color:${scored?'var(--volt)':'var(--faint)'}">
-              ${scored?r.total+'<span style="font-size:11px;opacity:.5;margin-left:3px">pts</span>':'—'}
-            </div>
-          </div>`;
-      }).join('')}
-    </div>` : '';
+        var totalHtml = scored
+          ? r.total+'<span style="font-size:11px;opacity:.5;margin-left:3px">pts</span>'
+          : '\u2014';
+        return '<div class="res-extra-row">'
+          +'<div class="res-extra-rank">'+pos+'</div>'
+          +'<div class="res-extra-name">'
+            +'<div class="res-extra-last">'+((r.team.lastName||r.team.name||'').toUpperCase())+'</div>'
+            +'<div class="res-extra-first">'+(r.team.firstName||'')+'</div>'
+          +'</div>'
+          +'<div class="res-extra-pills">'+pills+'</div>'
+          +'<div class="res-extra-total" style="color:'+(scored?'var(--volt)':'var(--faint)')+'">'+totalHtml+'</div>'
+          +'</div>';
+      }).join('');
+      extrasHtml = '<div class="res-extras">'+rows+'</div>';
+    }
 
-    return `<div class="res-section">${hdrHtml}${podiumHtml}${extrasHtml}</div>`;
+    return '<div class="res-section">'+hdr+podiumHtml+extrasHtml+'</div>';
   }).join('');
 
-  document.getElementById('resScroll').innerHTML = html ||
-    `<div style="color:var(--faint);padding:80px;text-align:center;font-size:20px;font-family:var(--mono)">
-      Aucun score enregistré.</div>`;
+  document.getElementById('resScroll').innerHTML = sections ||
+    '<div style="color:var(--faint);padding:80px;text-align:center;font-size:20px;font-family:var(--mono)">Aucun score enregistr\u00e9.</div>';
 }
 
 /* ── AUTO-SCROLL ENGINE ────────────────────────────────────────── */
