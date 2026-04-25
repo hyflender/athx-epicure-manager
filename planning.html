@@ -57,20 +57,6 @@
       }
       td.z-active { animation: pulse-glow 1.6s ease-in-out infinite; }
 
-      /* ── Badges ────────────────────────────────────────────────── */
-      .cat-badge {
-        display: inline-block;
-        font-size: 10px;
-        font-family: var(--mono);
-        padding: 1px 5px;
-        border-radius: 3px;
-        border: 1px solid rgba(0,0,0,.12);
-        color: var(--muted);
-      }
-      .cat-Lite { border-color: rgba(111,207,151,.4); color: #1a7a48; }
-      .cat-ATHX { border-color: rgba(245,192,48,.4);  color: var(--gold); }
-      .cat-Pro  { border-color: rgba(235,87,87,.4);   color: #c0392b; }
-
       /* ── Zone header cols ──────────────────────────────────────── */
       .zone-scored-col   { color: var(--gold); }
       .zone-free-col     { color: var(--muted); }
@@ -87,36 +73,94 @@
         align-items: center;
         margin-bottom: 10px;
       }
-      #live-status .dot-live {
-        width: 8px; height: 8px; border-radius: 50%;
-        background: #6fcf97;
-        animation: pulse-dot 1.2s ease-in-out infinite;
-        display: inline-block;
-      }
-      @keyframes pulse-dot {
-        0%,100% { opacity: 1; transform: scale(1); }
-        50%      { opacity: .4; transform: scale(.7); }
-      }
-      .next-up {
-        background: rgba(245,166,35,.12);
-        border: 1px solid rgba(245,166,35,.3);
-        border-radius: 5px;
-        padding: 3px 10px;
-        color: #f5a623;
-        font-weight: 700;
-      }
-
       /* ── Misc ──────────────────────────────────────────────────── */
       .summary-grid {
         display: flex; gap: 16px; flex-wrap: wrap;
         font-size: 12px; color: var(--muted); font-family: var(--mono); margin-bottom: 8px;
       }
-      .summary-grid span strong { color: var(--foreground); }
-      .zone-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; font-family: var(--mono); margin-bottom: 14px; }
-      .zone-legend-item { display: flex; align-items: center; gap: 5px; }
-      .zone-dot         { width: 8px; height: 8px; border-radius: 50%; }
-      .zone-dot-scored     { background: var(--gold); }
-      .zone-dot-transition { background: rgba(0,0,0,.2); }
+      .summary-grid span strong { color: var(--text); }
+      .zone-dot-transition { background: var(--border-md); }
+
+      /* #print-btn utilise .print-btn depuis styles.css */
+
+      /* ══════════════════════════════════════════════════════════
+         STYLES D'IMPRESSION
+      ══════════════════════════════════════════════════════════ */
+      @media print {
+        /* Reset général */
+        *, *::before, *::after { box-sizing:border-box; }
+        html, body {
+          background:#fff !important; color:#000 !important;
+          font-family: 'Arial', sans-serif !important;
+          font-size:11pt; margin:0; padding:0;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+
+        /* Masquer tout ce qui n'est pas utile */
+        header, nav, #live-status, .zone-legend, #print-btn,
+        .summary-grid, #next-up-label { display:none !important; }
+
+        main { padding:0 !important; }
+        .card { box-shadow:none !important; border:none !important; padding:0 !important; margin:0 !important; }
+
+        /* En-tête d'impression */
+        #print-header {
+          display:flex !important;
+          align-items:center; justify-content:space-between;
+          border-bottom:3px solid #000; padding-bottom:10px; margin-bottom:16px;
+        }
+        .ph-title { font-size:22pt; font-weight:900; letter-spacing:.06em; }
+        .ph-subtitle { font-size:11pt; color:#555; margin-top:3px; }
+        .ph-date { font-size:10pt; color:#555; text-align:right; }
+        .ph-logo { font-size:28pt; font-weight:900; color:#000; }
+
+        /* Table */
+        .planning-table { border-collapse:collapse !important; width:100% !important; font-size:9pt !important; }
+        .planning-table th {
+          background:#111 !important; color:#fff !important;
+          font-size:8pt !important; padding:6px 8px !important;
+          border:1px solid #999 !important; text-align:center !important;
+        }
+        .planning-table th.zone-scored-col { background:#1a1a1a !important; color:#C6FF00 !important; }
+        .planning-table td { border:1px solid #ddd !important; padding:5px 8px !important; }
+
+        /* Heat header */
+        .heat-header td {
+          background:#222 !important; color:#C6FF00 !important;
+          font-weight:700 !important; font-size:9pt !important;
+          padding:5px 10px !important; border:1px solid #999 !important;
+          letter-spacing:.04em !important;
+        }
+        /* Athlete rows alternées */
+        tr.athlete-row:nth-child(even) td { background:#f8f8f8 !important; }
+        tr.athlete-row td { color:#000 !important; opacity:1 !important; }
+
+        /* Badges catégorie */
+        .cat-badge { border:1px solid #ccc !important; color:#000 !important; font-size:8pt !important; }
+        .cat-ATHX { border-color:#C6FF00 !important; background:#C6FF0020 !important; }
+        .cat-Lite { border-color:#60A5FA !important; background:#60A5FA20 !important; }
+        .cat-Pro  { border-color:#FF4444 !important; background:#FF444420 !important; }
+
+        /* Zone times */
+        .zone-time { font-size:9pt !important; }
+        .zone-scored-col-base { color:#000 !important; font-weight:600 !important; }
+
+        /* Supprimer les animations */
+        * { animation:none !important; transition:none !important; }
+
+        /* Forcer une page par heat si beaucoup d'athlètes */
+        tr.heat-header { page-break-before:auto; }
+
+        /* Pied de page */
+        #print-footer {
+          display:flex !important; justify-content:space-between;
+          margin-top:16px; padding-top:8px; border-top:1px solid #ccc;
+          font-size:8pt; color:#888;
+        }
+      }
+      /* Masquer les éléments print en mode normal */
+      #print-header, #print-footer { display:none; }
     </style>
   </head>
   <body>
@@ -127,18 +171,28 @@
         <a class="active" href="./planning.html">Planning heats</a>
         <a href="./epreuves.html">Épreuves</a>
         <a href="./scores.html">Saisie scores</a>
-        <a href="./classement.html">Classement</a>
-        <a href="./resultats.html">Résultats Live</a>
-        <a href="./ops.html">Ops</a>
+        <a href="./classement.html">Classement</a><a href="./ops.html">Ops</a>
       </nav>
     </header>
     <main>
+      <!-- En-tête visible uniquement à l'impression -->
+      <div id="print-header">
+        <div>
+          <div class="ph-title" id="ph-title">ATHX · Epicure</div>
+          <div class="ph-subtitle" id="ph-subtitle">Planning des Heats</div>
+        </div>
+        <div class="ph-date" id="ph-date"></div>
+      </div>
+
       <section class="card">
         <div class="summary-grid">
           <span>Départ toutes les <strong id="interval">—</strong> min</span>
           <span><strong id="per-heat">—</strong> athlètes / heat</span>
           <span>Premier départ : <strong id="start-time">—</strong></span>
           <span><strong id="heat-count">—</strong> heats au total</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+          <button id="print-btn" class="print-btn" onclick="doPrint()">🖨️ Imprimer le planning</button>
         </div>
         <div id="live-status">
           <span><span class="dot-live"></span> Temps réel</span>
@@ -153,6 +207,12 @@
           </table>
         </div>
       </section>
+
+      <!-- Pied de page impression -->
+      <div id="print-footer">
+        <span id="pf-comp"></span>
+        <span>Imprimé le <span id="pf-date"></span></span>
+      </div>
     </main>
     <script src="./assets/js/data.js"></script>
     <script>
@@ -358,6 +418,24 @@
         tick();
         if (tickTimer) clearInterval(tickTimer);
         tickTimer = setInterval(tick, 1000);
+      }
+
+      function doPrint() {
+        const state  = AthxStore.loadState();
+        const cfg    = state.config || {};
+        const compName = cfg.name || "ATHX Epicure";
+        const compDate = cfg.date
+          ? new Date(cfg.date).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})
+          : "";
+        const now = new Date().toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+
+        document.getElementById("ph-title").textContent    = compName;
+        document.getElementById("ph-subtitle").textContent = `Planning des Heats — ${scheduleCache.length} heats · départ toutes les ${cfg.heatIntervalMinutes||20} min`;
+        document.getElementById("ph-date").innerHTML       = `<strong>${compDate}</strong><br>Départ : ${cfg.startTime||"08:00"}`;
+        document.getElementById("pf-comp").textContent     = compName;
+        document.getElementById("pf-date").textContent     = now;
+
+        window.print();
       }
 
       AthxStore.whenCloudReady()

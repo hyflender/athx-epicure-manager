@@ -382,3 +382,178 @@ table.sheet td.active .cell-text   { display: none; }
 ::-webkit-scrollbar-track      { background: var(--bg); }
 ::-webkit-scrollbar-thumb      { background: var(--border-md); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover{ background: var(--border-lg); }
+
+/* ════════════════════════════════════════════════════════════════
+   COMPOSANTS PARTAGÉS
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Badges catégorie ─────────────────────────────────────────── */
+.cat-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-family: var(--mono);
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  white-space: nowrap;
+}
+.cat-Lite { background: rgba(96,165,250,.15);  color: #60A5FA; }
+.cat-ATHX { background: rgba(198,255,0,.12);   color: var(--accent); }
+.cat-Pro  { background: rgba(248,113,113,.15); color: #F87171; }
+
+/* ── Badge genre (complément du cat-badge) ───────────────────── */
+.gen-Femme { background: rgba(244,114,182,.1); color: #F472B6; }
+.gen-Homme { background: rgba(96,165,250,.1);  color: #60A5FA; }
+
+/* ── Live dot ─────────────────────────────────────────────────── */
+.dot-live {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--ok);
+  animation: blink-dot 1.2s ease-in-out infinite;
+  vertical-align: middle;
+  margin-right: 5px;
+  flex-shrink: 0;
+}
+@keyframes blink-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: .35; transform: scale(.65); }
+}
+
+/* ── Animations communes ─────────────────────────────────────── */
+@keyframes fadeUp  { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+@keyframes spin    { to   { transform:rotate(360deg); } }
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(198,255,0,.4); }
+  50%       { box-shadow: 0 0 12px 4px rgba(198,255,0,.15); }
+}
+
+/* ── Spinner ──────────────────────────────────────────────────── */
+.spinner {
+  display: inline-block;
+  width: 20px; height: 20px;
+  border: 2.5px solid rgba(255,255,255,.1);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  vertical-align: middle;
+}
+
+/* ── Toggle switch ───────────────────────────────────────────── */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 36px; height: 20px;
+  flex-shrink: 0; cursor: pointer;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  position: absolute; inset: 0;
+  border-radius: 20px;
+  background: var(--border-md);
+  transition: background .2s;
+  cursor: pointer;
+}
+.toggle-track::before {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px; border-radius: 50%;
+  left: 3px; top: 3px;
+  background: #fff; transition: transform .2s;
+}
+.toggle-switch input:checked + .toggle-track              { background: var(--accent); }
+.toggle-switch input:checked + .toggle-track::before      { transform: translateX(16px); }
+.toggle-switch.danger input:checked + .toggle-track       { background: var(--danger); }
+
+/* ── Zone dot + légende ──────────────────────────────────────── */
+.zone-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.zone-dot-scored     { background: var(--accent); }
+.zone-dot-free       { background: var(--border-md); }
+
+.zone-legend {
+  display: flex; gap: 14px; flex-wrap: wrap;
+  font-size: 11px; font-family: var(--mono); color: var(--muted);
+  margin-bottom: 14px;
+}
+.zone-legend-item { display: flex; align-items: center; gap: 5px; }
+
+/* ── Summary meta bar (ligne d'infos compactes) ──────────────── */
+.summary-meta {
+  display: flex; gap: 20px; flex-wrap: wrap; align-items: center;
+  font-size: 12px; color: var(--muted);
+  font-family: var(--mono); margin-bottom: 10px;
+}
+.summary-meta strong { color: var(--text); }
+
+/* ── Next-up banner (prochaine action imminente) ─────────────── */
+.next-up {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(245,166,35,.12);
+  border: 1px solid rgba(245,166,35,.35);
+  border-radius: 6px;
+  padding: 4px 12px;
+  color: #f5a623;
+  font-weight: 700;
+  font-family: var(--mono);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* ── Modal overlay générique ─────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,.75);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: auto; }
+
+.modal-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  transform: translateY(14px) scale(.97);
+  transition: transform .25s cubic-bezier(.17,.67,.3,1.1);
+}
+.modal-overlay.open .modal-box { transform: translateY(0) scale(1); }
+
+.modal-close {
+  position: absolute; top: 12px; right: 14px;
+  background: rgba(255,255,255,.07); border: none; border-radius: 50%;
+  width: 30px; height: 30px; cursor: pointer; font-size: 16px;
+  color: var(--muted); display: flex; align-items: center; justify-content: center;
+  line-height: 1;
+}
+.modal-close:hover { background: rgba(255,255,255,.14); color: var(--text); }
+
+/* ── Empty state ─────────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--muted);
+}
+.empty-state-icon  { font-size: 40px; margin-bottom: 10px; }
+.empty-state-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.empty-state-sub   { font-size: 13px; }
+
+/* ── Print utility ───────────────────────────────────────────── */
+.print-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 18px; border-radius: var(--radius-sm);
+  background: var(--accent); border: none; color: #0A0A0A;
+  font-size: 13px; font-weight: 700; cursor: pointer; flex-shrink: 0;
+}
+.print-btn:hover { filter: brightness(1.1); }

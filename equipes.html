@@ -92,11 +92,15 @@
         padding: 0 6px;
         border: none;
         outline: none;
-        background: #fff;
+        background: var(--surface);
         color: var(--text);
         font-family: var(--sans);
         font-size: 13px;
         cursor: pointer;
+      }
+      table.sheet td .cell-select option {
+        background: var(--surface);
+        color: var(--text);
       }
 
       table.sheet td.active .cell-select { display: block; }
@@ -167,9 +171,7 @@
         <a href="./planning.html">Planning heats</a>
         <a href="./epreuves.html">Épreuves</a>
         <a href="./scores.html">Saisie scores</a>
-        <a href="./classement.html">Classement</a>
-        <a href="./resultats.html">Résultats Live</a>
-        <a href="./ops.html">Ops</a>
+        <a href="./classement.html">Classement</a><a href="./ops.html">Ops</a>
       </nav>
     </header>
 

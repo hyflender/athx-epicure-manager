@@ -35,16 +35,6 @@
         gap: 4px;
         align-items: flex-end;
       }
-      .dot-live {
-        display: inline-block;
-        width: 7px; height: 7px; border-radius: 50%;
-        background: #6fcf97;
-        animation: blink-dot 1.2s ease-in-out infinite;
-        margin-right: 5px;
-        vertical-align: middle;
-      }
-      @keyframes blink-dot { 0%,100%{opacity:1} 50%{opacity:.3} }
-
       .ops-body {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -163,10 +153,6 @@
         border: 1px solid rgba(0,0,0,.12);
         flex-shrink: 0;
       }
-      .cat-Lite { border-color: rgba(111,207,151,.4); color: #1a7a48; }
-      .cat-ATHX { border-color: rgba(245,192,48,.4);  color: var(--gold,#f5c030); }
-      .cat-Pro  { border-color: rgba(235,87,87,.4);   color: #c0392b; }
-
       .chip-time  { font-family: var(--mono); font-size: 11px; color: var(--muted); flex-shrink: 0; }
       .chip-countdown {
         font-family: var(--mono);
@@ -220,6 +206,104 @@
       .tl-seg-future   { background: rgba(0,0,0,.08); color: var(--muted); }
       .tl-seg-scored   { outline: 1px solid rgba(245,192,48,.3); outline-offset: -1px; }
       .tl-athletes { font-size: 11px; color: var(--muted); width: 180px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+      /* ── Bouton saisie rapide flottant ──────────────────────────── */
+      #quick-score-fab {
+        position: fixed; bottom: 28px; right: 28px; z-index: 200;
+        background: var(--accent); color: #0A0A0A;
+        border: none; border-radius: 50px;
+        padding: 14px 24px; font-size: 15px; font-weight: 800;
+        cursor: pointer; box-shadow: 0 4px 24px rgba(198,255,0,.35);
+        display: flex; align-items: center; gap: 8px;
+        transition: transform .15s, box-shadow .15s;
+      }
+      #quick-score-fab:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(198,255,0,.45); }
+
+      /* ── Modal saisie score ──────────────────────────────────────── */
+      #qs-overlay {
+        display: none; position: fixed; inset: 0; z-index: 500;
+        background: rgba(0,0,0,.75); backdrop-filter: blur(4px);
+        align-items: center; justify-content: center;
+      }
+      #qs-overlay.open { display: flex; }
+      #qs-modal {
+        background: var(--card); border: 1px solid var(--border);
+        border-radius: 16px; padding: 28px 30px;
+        width: min(520px, 95vw); max-height: 90vh; overflow-y: auto;
+        box-shadow: 0 12px 60px rgba(0,0,0,.6);
+        position: relative;
+      }
+      .qs-close {
+        position: absolute; top: 14px; right: 16px;
+        background: rgba(255,255,255,.07); border: none; border-radius: 50%;
+        width: 32px; height: 32px; cursor: pointer; font-size: 18px;
+        color: var(--muted); display: flex; align-items: center; justify-content: center;
+      }
+      .qs-close:hover { background: rgba(255,255,255,.14); color: var(--text); }
+      .qs-title {
+        font-size: 18px; font-weight: 800; margin-bottom: 20px;
+        color: var(--text); letter-spacing: .03em;
+      }
+      .qs-field { margin-bottom: 16px; }
+      .qs-field label {
+        display: block; font-size: 11px; font-family: var(--mono);
+        color: var(--muted); text-transform: uppercase; letter-spacing: .07em;
+        margin-bottom: 6px;
+      }
+      .qs-field select, .qs-field input[type=text], .qs-field input[type=number] {
+        width: 100%; padding: 10px 12px; font-size: 14px;
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 8px; color: var(--text);
+      }
+      .qs-field select:focus, .qs-field input:focus {
+        outline: none; border-color: var(--accent);
+      }
+      .qs-zone-banner {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 14px; border-radius: 8px; margin-bottom: 18px;
+        font-size: 15px; font-weight: 700;
+        background: rgba(255,255,255,.04); border: 1px solid var(--border);
+      }
+      .qs-zone-icon { font-size: 22px; }
+      .qs-inputs { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+      .qs-sub-row { display: flex; gap: 10px; align-items: flex-end; }
+      .qs-sub-row .qs-field { flex: 1; margin-bottom: 0; }
+      #qs-strength-total {
+        font-family: var(--mono); font-size: 22px; font-weight: 700;
+        color: var(--accent); text-align: center;
+        padding: 10px; background: rgba(198,255,0,.07);
+        border-radius: 8px; border: 1px solid rgba(198,255,0,.2);
+        margin-bottom: 16px;
+      }
+      .qs-metcon-toggle {
+        display: flex; gap: 0; margin-bottom: 14px;
+        border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+      }
+      .qs-metcon-btn {
+        flex: 1; padding: 9px 0; font-size: 13px; font-weight: 600;
+        border: none; background: transparent; color: var(--muted); cursor: pointer;
+        transition: background .15s, color .15s;
+      }
+      .qs-metcon-btn.active { background: var(--accent); color: #0A0A0A; }
+      .qs-dnf-row {
+        display: flex; align-items: center; gap: 12px;
+        margin-bottom: 18px; font-size: 14px; font-weight: 600;
+        color: var(--muted); cursor: pointer;
+      }
+      .qs-dnf-toggle { position:relative; display:inline-block; width:38px; height:22px; flex-shrink:0; }
+      .qs-dnf-toggle input { opacity:0; width:0; height:0; }
+      .qs-dnf-track {
+        position:absolute; inset:0; border-radius:22px;
+        background: var(--border); transition:.2s; cursor:pointer;
+      }
+      .qs-dnf-track::before {
+        content:''; position:absolute; width:16px; height:16px;
+        left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s;
+      }
+      .qs-dnf-toggle input:checked + .qs-dnf-track { background:#e74c3c; }
+      .qs-dnf-toggle input:checked + .qs-dnf-track::before { transform:translateX(16px); }
+      .qs-prev { font-size:11px; color:var(--muted); margin-bottom:14px; font-family:var(--mono); }
+      .qs-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
     </style>
   </head>
   <body>
@@ -239,7 +323,6 @@
         <a href="./epreuves.html">Épreuves</a>
         <a href="./scores.html">Scores</a>
         <a href="./classement.html">Classement</a>
-        <a href="./resultats.html">Résultats Live</a>
         <a class="active" href="./ops.html">Ops</a>
       </nav>
       <div class="ops-status">
@@ -601,7 +684,7 @@
           <div class="news-row" id="news-row-${i}">
             <label class="news-toggle" title="${n.active!==false?'Visible':'Masqué'}">
               <input type="checkbox" ${n.active!==false?'checked':''} onchange="toggleNews(${i}, this.checked)"/>
-              <span class="news-toggle-track"></span>
+              <span class="toggle-track"></span>
             </label>
             <span class="news-text ${n.active===false?'news-off':''}">${n.text}</span>
             <button class="danger" onclick="deleteNews(${i})" style="padding:4px 10px;font-size:12px">✕</button>
@@ -631,6 +714,195 @@
         if (state.news && state.news[idx]) state.news[idx].active = active;
         AthxStore.saveState(state);
         renderNews();
+      }
+
+      // ══════════════════════════════════════════════════════════════
+      //  SAISIE RAPIDE DE SCORE
+      // ══════════════════════════════════════════════════════════════
+      const ZONE_META_OPS = {
+        ev_strength: { color:"#F5C030", icon:"🏋️", label:"Strength" },
+        ev_endurance:{ color:"#4ADE80", icon:"🚴", label:"Endurance" },
+        ev_metcon:   { color:"#00BFFF", icon:"⏱️", label:"MetCon X" },
+      };
+      const TIMECAP_OFFSET_OPS = 100000;
+
+      function openQS() {
+        const state = AthxStore.loadState();
+        const athletes = (state.teams||[]).slice().sort((a,b)=>{
+          const ln = (a.lastName||"").localeCompare(b.lastName||"");
+          return ln !== 0 ? ln : (a.firstName||"").localeCompare(b.firstName||"");
+        });
+        const scoredZones = (state.events||[]).filter(e=>e.scored).sort((a,b)=>a.order-b.order);
+
+        const athSel = document.getElementById("qs-athlete");
+        athSel.innerHTML = athletes.map(a =>
+          `<option value="${a.id}">${(a.lastName||"").toUpperCase()} ${a.firstName||""} (${a.category||"—"} ${a.gender||""})</option>`
+        ).join("");
+
+        const zoneSel = document.getElementById("qs-zone");
+        zoneSel.innerHTML = scoredZones.map(z =>
+          `<option value="${z.id}">${z.name}</option>`
+        ).join("");
+
+        document.getElementById("qs-dnf").checked = false;
+        document.getElementById("qs-overlay").classList.add("open");
+
+        athSel.addEventListener("change", qsRefresh);
+        zoneSel.addEventListener("change", qsRefresh);
+        qsRefresh();
+      }
+
+      function closeQS() {
+        document.getElementById("qs-overlay").classList.remove("open");
+        const athSel  = document.getElementById("qs-athlete");
+        const zoneSel = document.getElementById("qs-zone");
+        athSel.removeEventListener("change", qsRefresh);
+        zoneSel.removeEventListener("change", qsRefresh);
+      }
+
+      function qsRefresh() {
+        const state    = AthxStore.loadState();
+        const athId    = document.getElementById("qs-athlete").value;
+        const zoneId   = document.getElementById("qs-zone").value;
+        const zone     = (state.events||[]).find(e=>e.id===zoneId);
+        const scores   = state.scores||{};
+        const existing = scores[athId]?.[zoneId];
+        const meta     = ZONE_META_OPS[zoneId] || { color:"#888", icon:"📋", label:zone?.name||zoneId };
+
+        // Bannière zone
+        const banner = document.getElementById("qs-zone-banner");
+        banner.style.display = "";
+        banner.style.borderColor = meta.color+"55";
+        banner.style.background  = meta.color+"11";
+        banner.innerHTML = `<span class="qs-zone-icon">${meta.icon}</span>
+          <span style="color:${meta.color}">${meta.label}</span>`;
+
+        // Score précédent
+        const prevEl = document.getElementById("qs-prev");
+        if (existing) {
+          const isDNF = existing.dnf;
+          const isTCap = existing.timeCapped;
+          let prevStr = "Score actuel : ";
+          if (isDNF) prevStr += "DNF";
+          else if (zoneId === "ev_strength") prevStr += `${existing.value||0} kg total (Press ${existing.press||0} / Squat ${existing.squat||0} / Dead ${existing.deadlift||0})`;
+          else if (zoneId === "ev_metcon" && isTCap) prevStr += `Time Cap — ${existing.reps||0} reps`;
+          else if (zoneId === "ev_metcon") { const v=existing.value||0; prevStr += `${String(Math.floor(v/60)).padStart(2,"0")}:${String(v%60).padStart(2,"0")}`; }
+          else if (zoneId === "ev_endurance") prevStr += `${existing.value||0} m`;
+          else prevStr += existing.value||"—";
+          prevEl.textContent = prevStr;
+        } else {
+          prevEl.textContent = "Aucun score enregistré";
+        }
+
+        // Pré-remplir DNF
+        if (existing?.dnf) document.getElementById("qs-dnf").checked = true;
+
+        // Champs
+        qsRenderInputs(zoneId, zone, existing);
+      }
+
+      function qsRenderInputs(zoneId, zone, existing) {
+        const inputsEl = document.getElementById("qs-inputs");
+        const dnf = document.getElementById("qs-dnf").checked;
+
+        if (dnf) { inputsEl.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:10px">DNF — pas de score</div>`; return; }
+
+        if (zoneId === "ev_strength") {
+          const press = existing?.press||"";
+          const squat = existing?.squat||"";
+          const dead  = existing?.deadlift||"";
+          inputsEl.innerHTML = `
+            <div class="qs-sub-row">
+              <div class="qs-field"><label>Press (kg)</label><input type="number" id="qs-press" value="${press}" min="0" step="0.5" oninput="qsCalcStrength()"></div>
+              <div class="qs-field"><label>Squat (kg)</label><input type="number" id="qs-squat" value="${squat}" min="0" step="0.5" oninput="qsCalcStrength()"></div>
+              <div class="qs-field"><label>Deadlift (kg)</label><input type="number" id="qs-dead"  value="${dead}"  min="0" step="0.5" oninput="qsCalcStrength()"></div>
+            </div>
+            <div id="qs-strength-total">Total : — kg</div>`;
+          qsCalcStrength();
+        } else if (zoneId === "ev_metcon") {
+          const isTCap = existing?.timeCapped;
+          const tVal   = existing && !isTCap ? existing.value||0 : 0;
+          const tMm    = String(Math.floor(tVal/60)).padStart(2,"0");
+          const tSs    = String(tVal%60).padStart(2,"0");
+          const repsVal= existing?.reps||"";
+          inputsEl.innerHTML = `
+            <div class="qs-metcon-toggle">
+              <button class="qs-metcon-btn ${!isTCap?"active":""}" id="qs-mc-done" onclick="qsMcMode(false)">✅ Terminé</button>
+              <button class="qs-metcon-btn ${isTCap?"active":""}" id="qs-mc-tc"   onclick="qsMcMode(true)">⏰ Time Cap</button>
+            </div>
+            <div id="qs-mc-done-fields" style="${isTCap?"display:none":""}">
+              <div class="qs-field"><label>Temps (mm:ss)</label><input type="text" id="qs-time" value="${tMm}:${tSs}" placeholder="25:00"></div>
+            </div>
+            <div id="qs-mc-tc-fields" style="${!isTCap?"display:none":""}">
+              <div class="qs-field"><label>Répétitions complétées</label><input type="number" id="qs-reps" value="${repsVal}" min="0" step="1" placeholder="Ex: 85"></div>
+            </div>`;
+        } else if (zoneId === "ev_endurance") {
+          const mVal = existing?.value||"";
+          inputsEl.innerHTML = `<div class="qs-field"><label>Distance (mètres)</label><input type="number" id="qs-dist" value="${mVal}" min="0" step="1" placeholder="Ex: 8500"></div>`;
+        } else {
+          inputsEl.innerHTML = `<div class="qs-field"><label>Score</label><input type="text" id="qs-generic" value="${existing?.value||""}" placeholder="—"></div>`;
+        }
+      }
+
+      function qsToggleDNF() { qsRefresh(); }
+      function qsCalcStrength() {
+        const p = parseFloat(document.getElementById("qs-press")?.value)||0;
+        const s = parseFloat(document.getElementById("qs-squat")?.value)||0;
+        const d = parseFloat(document.getElementById("qs-dead")?.value)||0;
+        const tot = document.getElementById("qs-strength-total");
+        if (tot) tot.textContent = `Total : ${(p+s+d).toFixed(1)} kg`;
+      }
+      function qsMcMode(isTC) {
+        document.getElementById("qs-mc-done").classList.toggle("active", !isTC);
+        document.getElementById("qs-mc-tc").classList.toggle("active",  isTC);
+        document.getElementById("qs-mc-done-fields").style.display = isTC ? "none" : "";
+        document.getElementById("qs-mc-tc-fields").style.display   = isTC ? "" : "none";
+      }
+
+      function saveQS() {
+        const state  = AthxStore.loadState();
+        const athId  = document.getElementById("qs-athlete").value;
+        const zoneId = document.getElementById("qs-zone").value;
+        const dnf    = document.getElementById("qs-dnf").checked;
+
+        if (!athId || !zoneId) return;
+        if (!Array.isArray(state.scores)) state.scores = [];
+
+        if (dnf) {
+          AthxStore.upsertScore(state, { teamId:athId, eventId:zoneId, performance:"DNF", rawValue:null, dnf:true, subValues:{} });
+        } else if (zoneId === "ev_strength") {
+          const p = parseFloat(document.getElementById("qs-press")?.value)||0;
+          const s = parseFloat(document.getElementById("qs-squat")?.value)||0;
+          const d = parseFloat(document.getElementById("qs-dead")?.value)||0;
+          const total = p+s+d;
+          AthxStore.upsertScore(state, { teamId:athId, eventId:zoneId, performance:`${total} kg`, rawValue:total, dnf:false, subValues:{press:p,squat:s,deadlift:d} });
+        } else if (zoneId === "ev_metcon") {
+          const isTC = document.getElementById("qs-mc-tc")?.classList.contains("active");
+          if (isTC) {
+            const reps = parseInt(document.getElementById("qs-reps")?.value)||0;
+            AthxStore.upsertScore(state, { teamId:athId, eventId:zoneId, performance:`TC +${reps} reps`, rawValue:TIMECAP_OFFSET_OPS-reps, dnf:false, timeCapped:true, reps });
+          } else {
+            const raw = document.getElementById("qs-time")?.value||"0:00";
+            const [mm,ss] = raw.split(":").map(Number);
+            const secs = (mm||0)*60 + (ss||0);
+            AthxStore.upsertScore(state, { teamId:athId, eventId:zoneId, performance:raw, rawValue:secs, dnf:false, timeCapped:false });
+          }
+        } else if (zoneId === "ev_endurance") {
+          const dist = parseFloat(document.getElementById("qs-dist")?.value)||0;
+          AthxStore.upsertScore(state, { teamId:athId, eventId:zoneId, performance:`${dist} m`, rawValue:dist, dnf:false });
+        } else {
+          const v = document.getElementById("qs-generic")?.value||"";
+          AthxStore.upsertScore(state, { teamId:athId, eventId:zoneId, performance:v, rawValue:AthxStore.parseScoreValue(v), dnf:false });
+        }
+
+        AthxStore.saveState(state);
+        closeQS();
+        // Toast minimal
+        const toast = document.createElement("div");
+        toast.style.cssText = "position:fixed;bottom:100px;right:28px;z-index:999;background:var(--accent);color:#000;padding:10px 20px;border-radius:8px;font-weight:700;font-size:13px;";
+        toast.textContent = "✓ Score enregistré";
+        document.body.appendChild(toast);
+        setTimeout(()=>toast.remove(), 2500);
       }
 
       // Les éléments news sont dans le DOM APRÈS ce script, on attend DOMContentLoaded
@@ -665,20 +937,55 @@
       .news-text { flex: 1; font-size: 14px; color: var(--text); }
       .news-text.news-off { color: var(--muted); text-decoration: line-through; }
 
-      /* Toggle switch */
-      .news-toggle { position:relative; display:inline-block; width:34px; height:20px; flex-shrink:0; cursor:pointer; }
+      /* Toggle switch news → utilise .toggle-switch depuis styles.css */
+      .news-toggle { position:relative; display:inline-block; width:36px; height:20px; flex-shrink:0; cursor:pointer; }
       .news-toggle input { opacity:0; width:0; height:0; }
-      .news-toggle-track {
-        position:absolute; inset:0; border-radius:20px;
-        background:var(--border); transition:.2s;
-      }
-      .news-toggle-track::before {
-        content:''; position:absolute; width:14px; height:14px; border-radius:50%;
-        left:3px; top:3px; background:#fff; transition:.2s;
-      }
-      .news-toggle input:checked + .news-toggle-track { background:var(--accent); }
-      .news-toggle input:checked + .news-toggle-track::before { transform:translateX(14px); }
+      .news-toggle .toggle-track { position:absolute; inset:0; border-radius:20px; background:var(--border-md); transition:.2s; cursor:pointer; }
+      .news-toggle .toggle-track::before { content:''; position:absolute; width:14px; height:14px; border-radius:50%; left:3px; top:3px; background:#fff; transition:.2s; }
+      .news-toggle input:checked + .toggle-track { background:var(--accent); }
+      .news-toggle input:checked + .toggle-track::before { transform:translateX(16px); }
     </style>
+
+    <!-- ── Bouton Saisie rapide ───────────────────────────────────── -->
+    <button id="quick-score-fab" onclick="openQS()">✏️ Saisir un score</button>
+
+    <!-- ── Modal saisie rapide ────────────────────────────────────── -->
+    <div id="qs-overlay" onclick="if(event.target===this)closeQS()">
+      <div id="qs-modal">
+        <button class="qs-close" onclick="closeQS()">✕</button>
+        <div class="qs-title">✏️ Saisie rapide de score</div>
+
+        <div class="qs-field">
+          <label>Athlète</label>
+          <select id="qs-athlete"></select>
+        </div>
+
+        <div class="qs-field">
+          <label>Zone / Épreuve</label>
+          <select id="qs-zone"></select>
+        </div>
+
+        <div id="qs-zone-banner" class="qs-zone-banner" style="display:none"></div>
+        <div class="qs-prev" id="qs-prev"></div>
+
+        <!-- DNF toggle -->
+        <div class="qs-dnf-row">
+          <label class="qs-dnf-toggle">
+            <input type="checkbox" id="qs-dnf" onchange="qsToggleDNF()">
+            <span class="qs-dnf-track"></span>
+          </label>
+          <span>DNF / Abandon</span>
+        </div>
+
+        <!-- Champs dynamiques selon la zone -->
+        <div id="qs-inputs" class="qs-inputs"></div>
+
+        <div class="qs-actions">
+          <button onclick="closeQS()">Annuler</button>
+          <button class="primary" onclick="saveQS()">💾 Enregistrer</button>
+        </div>
+      </div>
+    </div>
 
     <div id="news-section">
       <div class="news-section-title">📢 Messages défilants — Dashboard TV</div>
