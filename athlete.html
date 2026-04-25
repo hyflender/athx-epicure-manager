@@ -317,13 +317,13 @@
     function searchAthletes(query) {
       if (!query || query.length < 2) return [];
       const q = normalize(query);
-      // Dédupe par teamId+compId
+      // Dédupe par nom unique (last|first) — un seul résultat par athlète
       const seen = new Set();
       return athleteIndex.filter(a => {
-        const k = `${a.compId}:${a.teamId}`;
-        if (seen.has(k)) return false;
-        const match = normalize(a.key).includes(q) || normalize(a.compName).includes(q);
-        if (match) seen.add(k);
+        const nameKey = `${normalize(a.last)}|${normalize(a.first)}`;
+        if (seen.has(nameKey)) return false;
+        const match = normalize(a.key).includes(q);
+        if (match) seen.add(nameKey);
         return match;
       }).slice(0, 20);
     }
@@ -341,7 +341,6 @@
             <div class="ac-name">${a.last} ${a.first}</div>
             <div class="ac-meta">${a.category} · ${a.gender}</div>
           </div>
-          <div class="ac-comp">${a.compName}${a.compDate ? " · "+fmtDate(a.compDate) : ""}</div>
         </div>`).join("");
       acBox.classList.add("open");
 
