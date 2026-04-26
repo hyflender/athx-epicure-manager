@@ -48,7 +48,7 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
 /* Vue unique — plus de slides */
 #live-view {
   display:grid;
-  grid-template-rows: 1fr clamp(115px,16vh,155px);
+  grid-template-rows: 1fr clamp(140px,21vh,195px);
   overflow:hidden; min-height:0;
 }
 
@@ -322,7 +322,7 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
 .tl-now-txt { font-family:var(--mono); font-size:clamp(10px,.9vw,13px); color:var(--volt); font-weight:700; }
 .tl-scroll {
   flex:1; display:flex; gap:clamp(5px,.5vw,8px); padding:clamp(5px,.7vh,8px) clamp(16px,1.8vw,24px);
-  overflow-x:auto; align-items:flex-start; min-height:0;
+  overflow-x:auto; overflow-y:hidden; align-items:stretch; min-height:0;
 }
 .tl-scroll::-webkit-scrollbar { height:2px; }
 
@@ -341,7 +341,7 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
 
 /* Departure cards */
 .dep-card {
-  flex-shrink:0; width:clamp(130px,13vw,180px);
+  flex-shrink:0; width:clamp(155px,16vw,220px);
   background:var(--card); border:1px solid rgba(255,255,255,.06);
   border-top:2px solid var(--dc,#444);
   border-radius:8px; padding:clamp(6px,.8vh,10px) clamp(8px,.8vw,12px);
@@ -358,7 +358,7 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
 .dep-heat      { font-family:var(--mono); font-size:clamp(8px,.7vw,10px); color:var(--faint); font-weight:600; }
 .dep-aths      { display:flex; flex-direction:column; gap:2px; margin-top:3px; }
 .dep-ath       { display:flex; align-items:center; gap:4px; }
-.dep-ath-name  { font-size:clamp(9px,.9vw,13px); font-weight:800; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dep-ath-name  { font-size:clamp(9px,.9vw,13px); font-weight:800; flex:1; line-height:1.2; word-break:break-word; }
 .dep-cat       { font-size:clamp(6px,.55vw,8px); font-weight:700; font-family:var(--mono); padding:1px 4px; border-radius:5px; text-transform:uppercase; flex-shrink:0; }
 .dep-elapsed   { font-family:var(--mono); font-size:clamp(8px,.7vw,10px); font-weight:700; color:var(--dc); padding-top:2px; border-top:1px solid var(--border); margin-top:2px; }
 .dep-soon-lbl  { font-family:var(--mono); font-size:clamp(8px,.7vw,10px); font-weight:700; color:var(--dc); padding-top:2px; border-top:1px solid var(--border); margin-top:2px; }
