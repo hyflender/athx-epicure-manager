@@ -116,8 +116,8 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
   border-radius:6px; flex:1; min-width:0; overflow:hidden;
 }
 .ath-score-pill.current-zone {
-  border-color:color-mix(in srgb,var(--zc) 60%,transparent);
-  background:color-mix(in srgb,var(--zc) 10%,transparent);
+  border-color:rgba(255,255,255,.28);
+  background:rgba(255,255,255,.07);
 }
 .ath-score-pill.scored {
   border-color:rgba(255,255,255,.18); background:rgba(255,255,255,.06);
@@ -147,6 +147,7 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
   grid-auto-rows: min-content;
   gap:clamp(6px,.8vh,12px);
   overflow-y:auto; min-height:0; align-content:start;
+  will-change:transform;
 }
 
 /* Zone inactive : ligne ultra compacte (transition vide = cachée via JS) */
@@ -170,7 +171,7 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
   background:var(--card); border:1px solid var(--zc, #555);
   border-left:4px solid var(--zc, #555);
   border-radius:10px; flex-shrink:0;
-  box-shadow:0 0 30px rgba(0,0,0,.5), 0 0 60px color-mix(in srgb,var(--zc,transparent) 8%,transparent);
+  box-shadow:0 2px 16px rgba(0,0,0,.5);
   overflow:hidden;
 }
 
@@ -178,17 +179,16 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
 .zone-card-header {
   display:flex; align-items:center; gap:clamp(10px,1.2vw,16px);
   padding:clamp(8px,1vh,13px) clamp(12px,1.2vw,18px);
-  background:color-mix(in srgb, var(--zc,transparent) 7%, #111);
+  background:#111;
   position:relative;
 }
 .zone-card-icon {
   width:clamp(32px,3.5vh,46px); height:clamp(32px,3.5vh,46px); border-radius:8px; flex-shrink:0;
   display:flex; align-items:center; justify-content:center; font-size:clamp(16px,1.8vh,24px);
-  background:color-mix(in srgb,var(--zc) 18%,transparent);
-  border:1px solid color-mix(in srgb,var(--zc) 30%,transparent);
+  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12);
 }
 .zone-card-info { flex:1; min-width:0; }
-.zone-card-num  { font-size:clamp(8px,.7vw,10px); font-family:var(--mono); font-weight:700; letter-spacing:.1em; color:color-mix(in srgb,var(--zc) 60%,var(--muted)); text-transform:uppercase; }
+.zone-card-num  { font-size:clamp(8px,.7vw,10px); font-family:var(--mono); font-weight:700; letter-spacing:.1em; color:var(--muted); text-transform:uppercase; }
 .zone-card-name { font-size:clamp(14px,1.6vw,21px); font-weight:900; text-transform:uppercase; letter-spacing:.04em; line-height:1.1; }
 .zone-card-meta { display:flex; align-items:center; gap:clamp(6px,.8vw,10px); margin-left:auto; }
 .zone-card-dur  { font-size:clamp(9px,.8vw,11px); color:var(--muted); font-family:var(--mono); }
@@ -196,7 +196,7 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
 /* Timer restant — encadré proéminent à droite */
 .zone-timer {
   display:flex; flex-direction:column; align-items:center; justify-content:center;
-  background:rgba(0,0,0,.35); border:1px solid color-mix(in srgb,var(--zc) 25%,transparent);
+  background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.1);
   border-radius:8px; padding:clamp(4px,.5vh,7px) clamp(10px,1.2vw,16px);
   flex-shrink:0;
 }
@@ -211,14 +211,13 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
 
 /* Barre de progression — fine, sous le header */
 .zone-prog      { height:2px; background:rgba(255,255,255,.06); }
-.zone-prog-fill { height:100%; background:var(--zc); transition:width 1s linear;
-  box-shadow:0 0 8px var(--zc); }
+.zone-prog-fill { height:100%; background:var(--zc); transition:width 1s linear; }
 
 /* Athletes grid */
 .zone-athletes { display:grid; grid-template-columns:repeat(auto-fill,minmax(clamp(200px,20vw,320px),1fr)); gap:clamp(5px,.6vh,9px); padding:clamp(8px,1vh,12px) clamp(10px,1.1vw,16px) clamp(10px,1.2vh,14px); }
 .ath-chip {
   display:flex; flex-direction:column; gap:0;
-  background:rgba(255,255,255,.04); border:1px solid color-mix(in srgb,var(--zc) 25%,transparent);
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1);
   border-radius:8px; padding:clamp(8px,.9vh,12px) clamp(10px,1vw,14px);
 }
 .ath-chip-top { display:flex; align-items:center; gap:clamp(8px,.9vw,12px); }
@@ -250,10 +249,10 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
   background:linear-gradient(90deg, #0A0A0A, #0E0E0E);
 }
 .lb-title { font-size:clamp(9px,.85vw,13px); font-weight:900; text-transform:uppercase; letter-spacing:.15em; color:var(--volt); flex:1; font-family:var(--mono); }
-.live-dot { width:7px; height:7px; border-radius:50%; background:#FF4444; animation:pDot 1.2s ease-in-out infinite; flex-shrink:0; }
-@keyframes pDot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.2;transform:scale(.5)} }
+.live-dot { width:7px; height:7px; border-radius:50%; background:#FF4444; animation:pDot 1.8s steps(1) infinite; flex-shrink:0; }
+@keyframes pDot { 0%,49%{opacity:1} 50%,100%{opacity:.2} }
 
-.lb-scroll { flex:1; overflow-y:auto; min-height:0; }
+.lb-scroll { flex:1; overflow-y:auto; min-height:0; will-change:transform; }
 
 .lb-group { border-bottom:1px solid var(--border); }
 .lb-group-hdr {
@@ -513,7 +512,7 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
   fill:none; stroke-width:12; stroke-linecap:round;
   stroke:var(--dc);
   transition:stroke .3s ease, stroke-dashoffset 1s linear;
-  filter:drop-shadow(0 0 10px var(--dc)) drop-shadow(0 0 22px var(--dc));
+  filter:drop-shadow(0 0 12px var(--dc));
 }
 #dep-ring-inner {
   position:absolute; inset:0;
@@ -593,10 +592,7 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
   font-family:var(--mono); font-weight:900;
   font-size:clamp(120px,22vw,320px); line-height:.85;
   color:var(--gc); letter-spacing:.05em;
-  text-shadow:
-    0 0 60px  color-mix(in srgb,var(--gc) 100%,transparent),
-    0 0 120px color-mix(in srgb,var(--gc) 70%,transparent),
-    0 0 240px color-mix(in srgb,var(--gc) 40%,transparent);
+  text-shadow: 0 0 80px var(--gc);
   animation:goWordBlast .55s cubic-bezier(.17,.67,.3,1.33) both;
 }
 @keyframes goWordBlast {
@@ -943,7 +939,7 @@ function renderZones(state){
     const timerColor = remTotalSec <= 120 ? '#FF4444' : remTotalSec <= 300 ? '#FF9500' : meta.color;
 
     const scoredEvs=state.events.filter(e=>e.scored).sort((a,b)=>a.order-b.order);
-    const ranking=AthxStore.getRanking(state);
+    const ranking=_cachedRanking||AthxStore.getRanking(state);
 
     const chips=here.map(({athlete,heat,score})=>{
       const sc=fmtScore(score,ev);
@@ -1014,7 +1010,7 @@ function renderZones(state){
 
 /* ── RENDER LEADERBOARD ────────────────────────────────────────── */
 function renderLeaderboard(state){
-  const ranking=AthxStore.getRanking(state);
+  const ranking=_cachedRanking||AthxStore.getRanking(state);
   const scoredEvs=state.events.filter(e=>e.scored);
   const ORDER=['Lite|Femme','Lite|Homme','ATHX|Femme','ATHX|Homme','Pro|Femme','Pro|Homme'];
   const groups={};
@@ -1467,7 +1463,7 @@ function showGoScreen(meta, athletes, color){
   // Reset word animation
   const word = document.getElementById('go-word');
   word.style.color = color;
-  word.style.textShadow = `0 0 60px ${color}, 0 0 120px color-mix(in srgb,${color} 70%,transparent), 0 0 240px color-mix(in srgb,${color} 40%,transparent)`;
+  word.style.textShadow = `0 0 80px ${color}`;
   word.classList.remove('blasting-go');
   void word.offsetWidth;
   word.classList.add('blasting-go');
@@ -1826,8 +1822,11 @@ function tickClock(){
 
 /* ── RENDER ALL ────────────────────────────────────────────────── */
 let state=null;
+let _cachedRanking=null; // calculé une seule fois par render
+
 function render(){
   if(!state) return;
+  _cachedRanking = AthxStore.getRanking(state); // 1 seul calcul par cycle
   renderTicker(state);
   renderZones(state);
   renderLeaderboard(state);
