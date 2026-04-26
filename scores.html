@@ -226,6 +226,65 @@
     .btn-save:hover { filter:brightness(1.1); }
     .btn-clear { background:#1C1C1C; border-color:#FF444440; color:#FF4444; flex:0 0 auto; padding:13px 16px; }
     .btn-clear:hover { background:#FF444415; border-color:#FF4444; }
+
+    /* ══ SCORE TOAST ══════════════════════════════════════════════ */
+    #score-toast {
+      position:fixed; bottom:28px; right:28px; z-index:9999;
+      width:min(360px,90vw);
+      transform:translateX(calc(100% + 40px));
+      opacity:0;
+      transition:transform .4s cubic-bezier(.17,.67,.35,1.15), opacity .3s ease;
+      pointer-events:none;
+      filter:drop-shadow(0 8px 28px rgba(0,0,0,.7));
+    }
+    #score-toast.show {
+      transform:translateX(0);
+      opacity:1;
+      pointer-events:auto;
+    }
+    .st-card {
+      background:#1A1A1A; border:1px solid #2E2E2E;
+      border-radius:14px; overflow:hidden; position:relative;
+    }
+    .st-stripe {
+      position:absolute; left:0; top:0; bottom:0; width:4px;
+      border-radius:14px 0 0 14px;
+    }
+    .st-body {
+      display:flex; align-items:center; gap:14px;
+      padding:14px 16px 14px 20px;
+    }
+    .st-zone-icon {
+      flex-shrink:0; width:44px; height:44px; border-radius:10px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:20px; background:rgba(255,255,255,.06);
+    }
+    .st-info { flex:1; min-width:0; }
+    .st-row1 { display:flex; align-items:center; gap:8px; margin-bottom:3px; }
+    .st-zone-name {
+      font-family:var(--mono); font-size:10px; font-weight:800;
+      letter-spacing:.15em; text-transform:uppercase;
+    }
+    .st-badge {
+      font-family:var(--mono); font-size:9px; font-weight:900;
+      letter-spacing:.1em; text-transform:uppercase;
+      padding:2px 7px; border-radius:20px;
+    }
+    .st-badge.new     { background:rgba(198,255,0,.15); color:#C6FF00; border:1px solid rgba(198,255,0,.3); }
+    .st-badge.updated { background:rgba(255,149,0,.15); color:#FF9500; border:1px solid rgba(255,149,0,.3); }
+    .st-ath-name { font-size:16px; font-weight:900; color:#FFF; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .st-score-row { display:flex; align-items:baseline; gap:6px; margin-top:6px; }
+    .st-score-val {
+      font-family:var(--mono); font-size:22px; font-weight:900; line-height:1;
+    }
+    .st-score-lbl { font-size:11px; color:var(--muted); font-family:var(--mono); }
+    .st-progress {
+      height:3px; background:rgba(255,255,255,.07);
+    }
+    .st-progress-bar {
+      height:100%; width:100%;
+      transition:width linear;
+    }
   </style>
 </head>
 <body>
@@ -563,9 +622,20 @@
         }
       }
 
+      // Détecter si c'est une mise à jour ou un nouveau score
+      const wasUpdate = state.scores.some(s => s.teamId === teamId && s.eventId === eventId);
       AthxStore.saveState(state);
-      sheetStatus.textContent = `✓ Sauvegardé — ${modalData.team.lastName||''} ${modalData.team.firstName||''} · ${ev.name.replace(' Zone','')}`;
-      setTimeout(() => { sheetStatus.textContent = ''; }, 3000);
+
+      // Score toast
+      const savedScore = state.scores.find(s => s.teamId === teamId && s.eventId === eventId);
+      showScoreToast({
+        team: modalData.team,
+        ev,
+        performance: savedScore?.performance || '',
+        isUpdate: wasUpdate,
+      });
+
+      sheetStatus.textContent = '';
 
       // Refresh table cell
       const td = document.querySelector(`td.score-cell[data-team-id="${teamId}"][data-event-id="${eventId}"]`);
@@ -747,6 +817,54 @@
       }
     });
 
+    /* ── SCORE TOAST ────────────────────────────────────────────── */
+    const ZONE_META_SCORES = {
+      ev_warmup:    { color:'#FF6B35', icon:'🔥', label:'Warm-Up'  },
+      ev_strength:  { color:'#FF4444', icon:'🏋️', label:'Strength' },
+      ev_refuel:    { color:'#00D4AA', icon:'💧', label:'Refuel'   },
+      ev_endurance: { color:'#C6FF00', icon:'🏃', label:'Endurance'},
+      ev_recovery:  { color:'#9B5DE5', icon:'⚡', label:'Recovery' },
+      ev_metcon:    { color:'#00BFFF', icon:'⏱️', label:'MetCon X' },
+    };
+    let _toastTimer = null;
+
+    function showScoreToast({ team, ev, performance, isUpdate }) {
+      const meta = ZONE_META_SCORES[ev.id] || { color:'#C6FF00', icon:'🏅', label: ev.name };
+      const toast = document.getElementById('score-toast');
+
+      document.getElementById('st-stripe').style.background   = meta.color;
+      document.getElementById('st-icon').textContent          = meta.icon;
+      document.getElementById('st-icon').style.border         = `1px solid ${meta.color}40`;
+      document.getElementById('st-zone-name').textContent     = meta.label;
+      document.getElementById('st-zone-name').style.color     = meta.color;
+      document.getElementById('st-ath-name').textContent      = `${(team.lastName||'').toUpperCase()}${team.firstName ? ' ' + team.firstName : ''}`;
+      document.getElementById('st-score-val').textContent     = performance || '—';
+      document.getElementById('st-score-val').style.color     = meta.color;
+      document.getElementById('st-score-lbl').textContent     = isUpdate ? 'score mis à jour' : 'score enregistré';
+
+      const badge = document.getElementById('st-badge');
+      badge.textContent  = isUpdate ? 'Modifié' : 'Nouveau';
+      badge.className    = 'st-badge ' + (isUpdate ? 'updated' : 'new');
+
+      // Progress bar
+      const bar = document.getElementById('st-bar');
+      bar.style.background      = meta.color;
+      bar.style.transition      = 'none';
+      bar.style.width           = '100%';
+
+      // Show
+      toast.classList.add('show');
+      clearTimeout(_toastTimer);
+
+      // Animate bar
+      requestAnimationFrame(() => {
+        bar.style.transition = 'width 3s linear';
+        bar.style.width = '0%';
+      });
+
+      _toastTimer = setTimeout(() => toast.classList.remove('show'), 3200);
+    }
+
     /* ── Init ──────────────────────────────────────────────────── */
     AthxAuth.requireAuth({ onSuccess: () => {
       injectLogoutBtn();
@@ -755,5 +873,27 @@
         .catch(err => alert(`Cloud indisponible: ${err.message||err}`));
     }});
   </script>
+
+  <!-- SCORE TOAST -->
+  <div id="score-toast">
+    <div class="st-card">
+      <div class="st-stripe" id="st-stripe"></div>
+      <div class="st-body">
+        <div class="st-zone-icon" id="st-icon"></div>
+        <div class="st-info">
+          <div class="st-row1">
+            <div class="st-zone-name" id="st-zone-name"></div>
+            <div class="st-badge" id="st-badge"></div>
+          </div>
+          <div class="st-ath-name" id="st-ath-name"></div>
+          <div class="st-score-row">
+            <div class="st-score-val" id="st-score-val"></div>
+            <div class="st-score-lbl" id="st-score-lbl"></div>
+          </div>
+        </div>
+      </div>
+      <div class="st-progress"><div class="st-progress-bar" id="st-bar"></div></div>
+    </div>
+  </div>
 </body>
 </html>
