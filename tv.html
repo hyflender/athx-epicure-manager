@@ -246,6 +246,23 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
 .sph-dots { display:flex; gap:4px; justify-content:flex-end; margin-top:2px; }
 .sph-dot  { width:5px; height:5px; border-radius:50%; background:rgba(255,255,255,.2); }
 .sph-dot.active { background:#FF4444; }
+/* Time Cap badge */
+.timecap-badge {
+  display:flex; flex-direction:column; align-items:flex-end; flex-shrink:0; gap:2px;
+}
+.timecap-label {
+  font-family:var(--mono); font-size:clamp(9px,.85vw,12px); font-weight:900;
+  color:#FF9500; background:rgba(255,149,0,.15); border:1px solid rgba(255,149,0,.3);
+  padding:2px 8px; border-radius:4px; letter-spacing:.12em; text-transform:uppercase;
+}
+.timecap-sub {
+  font-size:clamp(7px,.6vw,9px); font-family:var(--mono); color:var(--muted);
+  letter-spacing:.08em; text-transform:uppercase; text-align:right;
+}
+.timecap-timer {
+  font-family:var(--mono); font-size:clamp(13px,1.4vw,18px); font-weight:900;
+  color:#FF9500; line-height:1;
+}
 
 /* ── LEADERBOARD ─────────────────────────────────────────────────── */
 #lb-panel {
@@ -813,6 +830,12 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
 <script src="./assets/js/data.js"></script>
 <script>
 /* ── ZONE META ─────────────────────────────────────────────────── */
+/* ── ZONE TIME CAPS ────────────────────────────────────────────── */
+const ZONE_TIMECAPS = {
+  ev_endurance: 22, // time cap à 22 min, zone de 30 min
+  ev_metcon:    25, // time cap = durée zone entière
+};
+
 /* ── STRENGTH SUB-PHASES ───────────────────────────────────────── */
 const STRENGTH_PHASES = [
   { start:0,  end:6,  rep:'1RM', name:'Strict Press' },
@@ -963,19 +986,29 @@ function renderZones(state){
       const fn=athlete.firstName||'';
       const rEntry=ranking.find(r=>r.team.id===athlete.id);
       // Timer restant (si zone scorée)
-      const showTimer = !!ev.scored;
+      const showTimer = true; // toujours afficher le temps restant, zone scorée ou non
       const remSafe = (typeof remaining === 'number' && isFinite(remaining)) ? remaining : 0;
       const chipZe = nm + remSafe;
       const chipRemSec = showTimer ? Math.max(0, Math.round(remSafe * 60)) : 0;
       const chipTimerColor = chipRemSec <= 120 ? '#FF4444' : chipRemSec <= 300 ? '#FF9500' : meta.color;
-      // Phase Strength — elapsed = durée - restant
+      // elapsed dans la zone (en minutes)
+      const chipElapsedMin = Math.max(0, ev.durationMinutes - remSafe);
+
+      // Phase Strength
       const isStrength = ev.id === 'ev_strength';
-      const chipElapsedMin = isStrength ? Math.max(0, ev.durationMinutes - remSafe) : 0;
       const sphase = isStrength && showTimer ? getStrengthPhase(chipElapsedMin) : null;
       const sphRemSec = sphase ? Math.max(0, Math.round((sphase.end - chipElapsedMin) * 60)) : 0;
       const sphRemM = Math.floor(sphRemSec / 60);
       const sphRemS = sphRemSec % 60;
       const sphIdx = sphase ? STRENGTH_PHASES.indexOf(sphase) : -1;
+
+      // Time cap (Endurance, MetCon…)
+      const timecap = ZONE_TIMECAPS[ev.id];
+      const isTimecapped = timecap != null && showTimer;
+      const tcPassed = isTimecapped && chipElapsedMin >= timecap;
+      const tcRemSec = isTimecapped && !tcPassed ? Math.max(0, Math.round((timecap - chipElapsedMin) * 60)) : 0;
+      const tcRemM = Math.floor(tcRemSec / 60);
+      const tcRemS = tcRemSec % 60;
 
       // Pills pour chaque épreuve scorée
       const pills=scoredEvs.map(sev=>{
@@ -1018,10 +1051,22 @@ function renderZones(state){
                        ${STRENGTH_PHASES.map((_,i)=>`<div class="sph-dot${i===sphIdx?' active':''}"></div>`).join('')}
                      </div>
                    </div>`
-                : `<div class="ath-chip-timer" data-chip-ze="${chipZe}" data-chip-zcolor="${meta.color}" data-chip-ev="${ev.id}">
+                : isTimecapped
+                ? tcPassed
+                  ? `<div class="timecap-badge" data-chip-ze="${chipZe}" data-chip-zcolor="${meta.color}" data-chip-ev="${ev.id}">
+                       <div class="timecap-label">⏱ TIME CAP</div>
+                       <div class="timecap-sub">zone en cours</div>
+                     </div>`
+                  : `<div class="timecap-badge" data-chip-ze="${chipZe}" data-chip-zcolor="${meta.color}" data-chip-ev="${ev.id}" data-chip-tc="${timecap}">
+                       <div class="timecap-label">⏱ TIME CAP</div>
+                       <div class="timecap-timer" style="color:${chipTimerColor}">${pad(tcRemM)}:${pad(tcRemS)}</div>
+                     </div>`
+                : showTimer
+                ? `<div class="ath-chip-timer" data-chip-ze="${chipZe}" data-chip-zcolor="${meta.color}" data-chip-ev="${ev.id}">
                      <div class="act-val" style="color:${chipTimerColor}">${pad(Math.floor(chipRemSec/60))}:${pad(chipRemSec%60)}</div>
                      <div class="act-lbl">restant</div>
                    </div>`
+                : ''
               }
             </div>
           </div>
@@ -1855,8 +1900,8 @@ function tickZoneTimers(){
     const color = rem <= 120 ? '#FF4444' : rem <= 300 ? '#FF9500' : zc;
 
     if(evId === 'ev_strength'){
-      // Recalculer la phase en cours
-      const elapsedMin = nm - (ze - 20); // 20 = durée Strength
+      // Recalculer la phase en cours (durée Strength = 20 min)
+      const elapsedMin = nm - (ze - 20);
       const ph = getStrengthPhase(Math.max(0, elapsedMin));
       const phIdx = STRENGTH_PHASES.indexOf(ph);
       const phRemSec = Math.max(0, Math.round((ph.end - elapsedMin) * 60));
@@ -1867,6 +1912,23 @@ function tickZoneTimers(){
       const nameEl = el.querySelector('.sph-name');
       if(nameEl) nameEl.textContent = ph.name;
       el.querySelectorAll('.sph-dot').forEach((d,i)=>d.classList.toggle('active',i===phIdx));
+    } else if(el.classList.contains('timecap-badge')){
+      // Time cap (Endurance, MetCon…)
+      const tc = parseFloat(el.dataset.chipTc);
+      if(!isFinite(tc)) return;
+      const evDur = evId === 'ev_endurance' ? 30 : evId === 'ev_metcon' ? 25 : tc;
+      const elapsedMin = evDur - (ze - nm);
+      const tcPassed = elapsedMin >= tc;
+      const timerEl = el.querySelector('.timecap-timer');
+      const subEl   = el.querySelector('.timecap-sub');
+      if(tcPassed){
+        if(timerEl){ timerEl.remove(); }
+        if(subEl)  subEl.textContent = 'zone en cours';
+      } else {
+        const tcRemSec = Math.max(0, Math.round((tc - elapsedMin) * 60));
+        const tcColor = tcRemSec <= 120 ? '#FF4444' : tcRemSec <= 300 ? '#FF9500' : '#FF9500';
+        if(timerEl){ timerEl.textContent = pad(Math.floor(tcRemSec/60))+':'+pad(tcRemSec%60); timerEl.style.color = tcColor; }
+      }
     } else {
       const valEl = el.querySelector('.act-val');
       if(valEl){ valEl.textContent = pad(Math.floor(rem/60))+':'+pad(rem%60); valEl.style.color = color; }
