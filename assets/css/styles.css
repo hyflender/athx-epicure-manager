@@ -252,15 +252,27 @@ input::placeholder, textarea::placeholder { color: var(--faint); }
 select { cursor: pointer; }
 textarea { resize: vertical; min-height: 80px; }
 
-.row {
+/* Lignes d’outils (formulaires) — ne pas cibler .row seul : ça casse la grille Bootstrap (admin, équipes, portail…). */
+form .row,
+section.card > .row {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
   align-items: flex-end;
 }
-.row > *      { flex: 1; min-width: 130px; }
-.row > button { flex: 0 0 auto; }
-.row > label  { min-width: 130px; }
+form .row > *,
+section.card > .row > * {
+  flex: 1;
+  min-width: 130px;
+}
+form .row > button,
+section.card > .row > button {
+  flex: 0 0 auto;
+}
+form .row > label,
+section.card > .row > label {
+  min-width: 130px;
+}
 
 /* ── Tables ──────────────────────────────────────────────────────── */
 table { width: 100%; border-collapse: collapse; font-size: 14px; }

@@ -4,7 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ATHX Epicure - Athlètes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
     <link rel="stylesheet" href="./assets/css/styles.css" />
+    <link rel="stylesheet" href="./assets/css/admin-bootstrap.css" />
     <link rel="stylesheet" href="./assets/css/auth.css" />
     <style>
       /* Override global label/input styles inside form and sheet */
@@ -165,18 +167,31 @@
     </style>
   </head>
   <body>
-    <header><h1>ATHX · Epicure</h1><nav class="menu">
-        <a href="./index.html">Accueil</a>
-        <a href="./tv.html" target="_blank" rel="noopener noreferrer">📺 Dashboard TV</a>
-        <a class="active" href="./equipes.html">Équipes</a>
-        <a href="./planning.html">Planning heats</a>
-        <a href="./epreuves.html">Épreuves</a>
-        <a href="./scores.html">Saisie scores</a>
-        <a href="./classement.html">Classement</a><a href="./ops.html">Ops</a>
-      </nav>
-    </header>
+    <nav class="navbar navbar-expand-md navbar-dark border-bottom border-secondary admin-navbar">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="./index.html" title="Accueil public"><span class="fw-bold">ATHX</span> <span class="text-secondary" style="font-size:0.88rem">· Epicure</span></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNav" aria-controls="adminNav" aria-expanded="false" aria-label="Menu">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="adminNav">
+          <ul class="navbar-nav ms-md-auto flex-wrap py-2 py-md-0">
+            <li class="nav-item"><a class="nav-link" href="./portail.html">Espace athlètes</a></li>
+            <li class="nav-item"><a class="nav-link" href="./admin.html">Paramètres</a></li>
+            <li class="nav-item"><a class="nav-link" href="./tv.html" target="_blank" rel="noopener noreferrer">📺 TV</a></li>
+            <li class="nav-item"><a class="nav-link active" href="./equipes.html">Équipes</a></li>
+            <li class="nav-item"><a class="nav-link" href="./planning.html">Planning</a></li>
+            <li class="nav-item"><a class="nav-link" href="./epreuves.html">Épreuves</a></li>
+            <li class="nav-item"><a class="nav-link" href="./scores.html">Scores</a></li>
+            <li class="nav-item"><a class="nav-link" href="./classement.html">Classement</a></li>
+            <li class="nav-item"><a class="nav-link" href="./ops.html">Ops</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
 
-    <main class="grid grid-2">
+    <main class="container-fluid px-2 px-sm-3 py-3 py-md-4">
+      <div class="row g-3">
+        <div class="col-12 col-xl-4">
       <section class="card">
         <h2>Nouvel athlète</h2>
         <form id="team-form">
@@ -206,24 +221,31 @@
           <div class="row">
             <label>Club / Box <input id="team-club" /></label>
           </div>
+          <div class="row">
+            <label>E-mail (optionnel, partage planning) <input id="team-email" type="email" inputmode="email" placeholder="prenom.nom@email.com" autocomplete="off" /></label>
+          </div>
           <button class="primary" type="submit">Ajouter</button>
         </form>
       </section>
+        </div>
 
-      <section class="card" style="grid-column: 1 / -1">
+        <div class="col-12 col-xl-8">
+      <section class="card">
         <h2>Athlètes — cliquez sur une cellule pour modifier</h2>
-        <div class="sheet-wrap">
+        <p class="muted small">Renseignez l’e-mail pour envoyer le planning depuis la page <strong>Planning</strong>.</p>
+        <div class="sheet-wrap table-responsive">
           <table class="sheet" id="sheet">
             <thead>
               <tr>
                 <th style="width:24px"></th>
-                <th style="width:130px">Nom</th>
-                <th style="width:110px">Prénom</th>
-                <th style="width:90px">Catégorie</th>
-                <th style="width:100px">Genre</th>
-                <th style="width:72px">Club</th>
-                <th style="width:52px">Heat</th>
-                <th style="width:72px">Départ</th>
+                <th style="min-width:100px">Nom</th>
+                <th style="min-width:90px">Prénom</th>
+                <th style="min-width:160px">E-mail</th>
+                <th style="min-width:80px">Catégorie</th>
+                <th style="min-width:80px">Genre</th>
+                <th style="min-width:60px">Club</th>
+                <th style="min-width:44px">Heat</th>
+                <th style="min-width:64px">Départ</th>
                 <th style="width:44px"></th>
               </tr>
             </thead>
@@ -232,8 +254,11 @@
         </div>
         <div class="sheet-status" id="sheet-status"></div>
       </section>
+        </div>
+      </div>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
         <script src="./assets/js/auth.js"></script>
     <script src="./assets/js/data.js"></script>
     <script>
@@ -245,8 +270,9 @@
       const category   = document.querySelector("#category");
       const gender     = document.querySelector("#gender");
       const teamClub   = document.querySelector("#team-club");
+      const teamEmail  = document.querySelector("#team-email");
 
-      const COLS = ["lastName","firstName","category","gender","club"];
+      const COLS = ["lastName","firstName","email","category","gender","club"];
 
       function getHeatTimes(state) {
         const schedule = AthxStore.buildHeatSchedule(state);
@@ -296,6 +322,7 @@
 
         const input = document.createElement("input");
         input.className = "cell-input";
+        if (field === "email") { input.type = "email"; input.inputMode = "email"; input.autocomplete = "off"; }
         input.value = team[field] != null ? String(team[field]) : "";
         if (field === "sortOrder") {
           input.type = "number"; input.min = "1";
@@ -329,6 +356,7 @@
         const formatted =
           field === "lastName"   ? newVal.toUpperCase() :
           field === "firstName"  ? newVal.charAt(0).toUpperCase() + newVal.slice(1).toLowerCase() :
+          field === "email"      ? newVal.trim().toLowerCase() :
           newVal;
         const next = field === "sortOrder" ? (Number(newVal) || 1) : formatted;
         if (String(prev) === String(next)) return;
@@ -524,6 +552,7 @@
         const payload = AthxStore.normalizeTeamPayload({
           firstName: rawFirst.charAt(0).toUpperCase() + rawFirst.slice(1).toLowerCase(),
           lastName:  rawLast.toUpperCase(),
+          email:     teamEmail.value.trim().toLowerCase(),
           category:  category.value,
           gender:    gender.value,
           club:      teamClub.value.trim(),

@@ -493,6 +493,240 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
   text-align:center; line-height:1;
 }
 
+/* ── AIDE ZONES / WODs (popup) — lecture TV, couleurs par zone ════ */
+#zones-help-overlay {
+  position:fixed; inset:0; z-index:9995;
+  display:flex; align-items:center; justify-content:center;
+  padding:clamp(4px,0.5vh,12px) clamp(4px,0.5vw,12px);
+  overflow:hidden;
+  background:rgba(0,0,0,.82);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  opacity:0; pointer-events:none;
+  transition:opacity .25s ease;
+}
+#zones-help-overlay.show { opacity:1; pointer-events:auto; }
+#zones-help-box {
+  display:flex; flex-direction:column;
+  width:min(98vw, 1680px);
+  max-width:100%;
+  height:min(94dvh, 94vh);
+  max-height:min(94dvh, 94vh);
+  background:radial-gradient(120% 80% at 50% 0%, rgba(198,255,0,.08) 0%, #0d0d0d 45%);
+  border:1px solid rgba(198,255,0,.25);
+  border-radius:16px;
+  box-shadow:0 24px 80px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.05);
+  overflow:hidden;
+}
+#zones-help-top {
+  flex-shrink:0;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:clamp(8px,1vh,14px) clamp(12px,1.4vw,20px);
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(90deg, rgba(198,255,0,.1) 0%, transparent 55%);
+}
+#zones-help-title {
+  font-family:var(--mono);
+  font-size:clamp(15px, 1.5vw, 24px);
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--volt);
+  text-shadow:0 0 24px rgba(198,255,0,.2);
+}
+#zones-help-close {
+  width:clamp(36px, 2.8vw, 48px);
+  height:clamp(36px, 2.8vw, 48px);
+  border-radius:10px; flex-shrink:0;
+  border:1px solid var(--border);
+  background:var(--card);
+  color:var(--muted);
+  font-size:clamp(18px, 1.6vw, 24px);
+  line-height:1; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:color .15s, border-color .15s, background .15s;
+}
+#zones-help-close:hover { color:#fff; border-color:var(--volt); background:rgba(198,255,0,.1); }
+#zones-help-body {
+  flex:1;
+  min-height:0;
+  overflow:hidden;
+  padding:clamp(6px,0.7vh,12px) clamp(10px,1.2vw,18px) clamp(6px,0.7vh,10px);
+  color:#e6e6e6;
+  display:flex;
+  flex-direction:column;
+  gap:clamp(4px,0.5vh,10px);
+}
+#zones-help-body p { margin:0; }
+#zones-help-body .zh-top {
+  color:#b8b8b8;
+  font-size:clamp(12px, 0.9vw, 16px);
+  line-height:1.32;
+  flex-shrink:0;
+}
+#zones-help-body .zh-legend {
+  display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px;
+  font-size:clamp(12px, 0.95vw, 16px);
+  color:var(--muted);
+  flex-shrink:0;
+}
+#zones-help-body .zh-legend strong { color:#ccc; font-weight:700; }
+#zones-help-body .zh-legend .zh-pill {
+  display:inline-flex; align-items:center; gap:5px; padding:3px 8px;
+  border-radius:999px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1);
+  font-size:clamp(10px, 0.75vw, 13px);
+}
+#zones-help-body .zh-legend .zh-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+#zones-help-body .zh-h {
+  font-size:clamp(11px, 0.85vw, 15px);
+  font-weight:900;
+  font-family:var(--mono);
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--volt);
+  margin:0;
+  flex-shrink:0;
+}
+#zones-help-body .zh-zones-grid {
+  flex:1;
+  min-height:0;
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  grid-template-rows:repeat(2, minmax(0, 1fr)) auto;
+  gap:clamp(6px, 0.7vh, 12px) clamp(6px, 0.6vw, 12px);
+  align-content:stretch;
+  align-items:stretch;
+}
+#zones-help-body .zh-zones-grid .zh-card:nth-child(6) {
+  grid-column:1 / -1;
+  min-height:0;
+}
+#zones-help-body .zh-card {
+  --zh: #888;
+  position:relative;
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:clamp(4px, 0.5vw, 10px);
+  align-items:start;
+  min-width:0;
+  min-height:0;
+  max-height:100%;
+  padding:clamp(6px, 0.55vh, 10px) clamp(6px, 0.55vw, 10px) clamp(6px, 0.55vh, 10px);
+  background:linear-gradient(165deg, color-mix(in srgb, var(--zh) 16%, #141414) 0%, #111 100%);
+  border:1px solid color-mix(in srgb, var(--zh) 40%, #333);
+  border-radius:12px;
+  box-shadow:0 4px 20px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.05);
+  overflow:hidden;
+}
+#zones-help-body .zh-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:4px; background:var(--zh);
+  border-radius:12px 12px 0 0; opacity:1;
+}
+#zones-help-body .zh-card-ico {
+  width:clamp(36px, 2.8vw, 50px);
+  height:clamp(36px, 2.8vw, 50px);
+  border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:clamp(18px, 1.6vw, 28px);
+  line-height:1;
+  background:color-mix(in srgb, var(--zh) 25%, #000);
+  border:1px solid color-mix(in srgb, var(--zh) 50%, transparent);
+  flex-shrink:0;
+  box-shadow:0 0 20px color-mix(in srgb, var(--zh) 30%, transparent);
+}
+#zones-help-body .zh-card-main { min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+#zones-help-body .zh-t {
+  font-weight:900;
+  color:#fff;
+  font-size:clamp(13px, 0.95vw, 18px);
+  line-height:1.12;
+  letter-spacing:.02em;
+}
+#zones-help-body .zh-t .zh-sub {
+  display:block; margin-top:2px;
+  font-size:clamp(10px, 0.68vw, 13px);
+  font-weight:700; font-family:var(--mono);
+  color:var(--zh);
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+}
+#zones-help-body .zh-badges { margin:4px 0 0; display:flex; flex-wrap:wrap; gap:4px; }
+#zones-help-body .zh-badges span {
+  font-size:clamp(8px, 0.58vw, 10px);
+  font-weight:800; font-family:var(--mono);
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  padding:3px 8px; border-radius:6px;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(0,0,0,.3);
+  color:#ccc;
+}
+#zones-help-body .zh-badges span.is-on { color:#0a0a0a; background:var(--volt); border-color:var(--volt); }
+#zones-help-body .zh-badges span.is-off { color:var(--muted); }
+#zones-help-body .zh-d {
+  margin-top:4px; color:#c4c4c4;
+  font-size:clamp(10px, 0.75vw, 14px);
+  line-height:1.28;
+  font-weight:500;
+  overflow:hidden;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:7;
+  line-clamp:7;
+}
+#zones-help-body .zh-d--metcon {
+  display:block;
+  overflow:visible;
+  -webkit-line-clamp:unset;
+  line-clamp:unset;
+  margin-top:6px;
+}
+#zones-help-body .zh-metcon-head {
+  font-size:clamp(10px, 0.8vw, 14px);
+  line-height:1.3;
+  color:#e0e0e0;
+  margin:0 0 6px;
+  font-weight:600;
+}
+#zones-help-body .zh-metcon-steps {
+  margin:0; padding:0 0 0 1.15em;
+  font-size:clamp(9px, 0.72vw, 13px);
+  line-height:1.32;
+  color:#c8c8c8;
+  columns:2;
+  column-gap:clamp(12px, 1.2vw, 20px);
+  column-fill:balance;
+}
+#zones-help-body .zh-metcon-steps li { margin:0 0 3px; break-inside:avoid; }
+#zones-help-body .zh-metcon-steps .zh-pro { color:var(--muted); font-size:0.92em; }
+#zones-help-body .zh-metcon-foot {
+  margin:6px 0 0;
+  font-size:clamp(8px, 0.65vw, 11px);
+  color:var(--muted);
+  line-height:1.3;
+}
+#zones-help-body .zh-foot {
+  font-size:clamp(9px, 0.65vw, 12px);
+  color:var(--muted);
+  line-height:1.25;
+  flex-shrink:0;
+  padding-top:2px; border-top:1px solid var(--border);
+}
+#zones-help-body .zh-foot a {
+  color:var(--volt);
+  font-weight:700;
+  text-decoration:underline;
+  text-underline-offset:2px;
+}
+#zones-help-body .zh-foot a:hover { color:#fff; }
+#zones-help-body .zh-metcon-foot a {
+  color:var(--volt);
+  font-weight:700;
+  text-decoration:underline;
+  text-underline-offset:2px;
+}
+#zones-help-body .zh-metcon-foot a:hover { color:#fff; }
+
 /* ── NEWS TICKER ─────────────────────────────────────────────────── */
 #news-ticker {
   background:#0D0D0D; border-top:1px solid var(--border);
@@ -859,6 +1093,7 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
       </div>
       <div class="hdr-clock" id="hdrClock">--:--:--</div>
       <div class="hdr-fs" id="fsBtn" title="Plein écran">⛶</div>
+      <div class="hdr-fs" id="zonesHelpBtn" title="Zones, WODs, standards" style="font-size:clamp(12px,1.2vw,16px)">ℹ</div>
       <div class="hdr-fs" id="testBtn" title="Tester le décompte" style="font-size:13px">▶</div>
     </div>
   </div>
@@ -894,6 +1129,90 @@ body { font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antial
 
   <!-- TOAST CONTAINER -->
   <div id="toast"></div>
+
+  <!-- AIDE : zones, WODs, standards (référence règlement par défaut ATHX) -->
+  <div id="zones-help-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="zones-help-title">
+    <div id="zones-help-box" onclick="event.stopPropagation()">
+      <div id="zones-help-top">
+        <div id="zones-help-title">Parcours &amp; épreuves</div>
+        <button type="button" id="zones-help-close" title="Fermer">✕</button>
+      </div>
+      <div id="zones-help-body">
+        <p class="zh-top">
+          <strong>6 zones</strong> d’affilée. <strong>Classement</strong> : somme des rangs sur Z2, Z4, Z6 — <strong>plus c’est bas, mieux c’est</strong>. Synthèse alignée sur les <strong>épreuves ATHX 2026</strong> (équipes / paires / solo — voir liens officiels ci‑dessous).
+        </p>
+        <div class="zh-legend" aria-label="Légende">
+          <span class="zh-pill"><span class="zh-dot" style="background:var(--volt)"></span><strong>Scoré</strong> = entre au classement</span>
+          <span class="zh-pill"><span class="zh-dot" style="background:#666"></span><strong>Non scoré</strong> = passage ou récup</span>
+          <span class="zh-pill"><strong>Time cap</strong> = limite de temps · <strong>Stagger</strong> = départ décalé (MetCon)</span>
+        </div>
+        <p class="zh-h" style="margin:0">Les 6 zones</p>
+        <div class="zh-zones-grid">
+          <div class="zh-card" style="--zh:#FF6B35">
+            <div class="zh-card-ico" aria-hidden="true">🔥</div>
+            <div class="zh-card-main">
+              <div class="zh-t">Warm-Up <span class="zh-sub">Zone 1 · 30 min</span></div>
+              <div class="zh-badges"><span class="is-off">Non scoré</span></div>
+              <p class="zh-d">Échauffement encadré (mobilité, activation). Pas de score sur le classement.</p>
+            </div>
+          </div>
+          <div class="zh-card" style="--zh:#FF4444">
+            <div class="zh-card-ico" aria-hidden="true">🏋️</div>
+            <div class="zh-card-main">
+              <div class="zh-t">Strength <span class="zh-sub">Zone 2 · 20 min</span></div>
+              <div class="zh-badges"><span class="is-on">Scoré — kg</span><span>Time cap 20 min</span></div>
+              <p class="zh-d"><strong>20 min</strong> : <strong>1RM</strong> strict press 0–6 · <strong>3RM</strong> back squat 6–12 · <strong>5RM</strong> deadlift 12–20. Score = <strong>charge totale (kg)</strong> (équipe = paire, solo = indiv., cf. 2026). Standards de mouvement : lien <em>Movement standards</em> ci‑dessous.</p>
+            </div>
+          </div>
+          <div class="zh-card" style="--zh:#00D4AA">
+            <div class="zh-card-ico" aria-hidden="true">💧</div>
+            <div class="zh-card-main">
+              <div class="zh-t">Refuel <span class="zh-sub">Zone 3 · 10 min</span></div>
+              <div class="zh-badges"><span class="is-off">Non scoré</span></div>
+              <p class="zh-d">Pause : eau, collation, respirer. Pas de score.</p>
+            </div>
+          </div>
+          <div class="zh-card" style="--zh:#C6FF00">
+            <div class="zh-card-ico" aria-hidden="true">🏃</div>
+            <div class="zh-card-main">
+              <div class="zh-t">Endurance <span class="zh-sub">Zone 4 · 30 min</span></div>
+              <div class="zh-badges"><span class="is-on">Scoré — m</span><span>Time cap 22 min</span></div>
+              <p class="zh-d"><strong>30 min</strong> zone, <strong>cap 22 min</strong> : <strong>Run + Row</strong>, swap chaque tour complété. Run/tour <strong>500 m · 750 m · 1 km</strong> (LITE / ATHX / PRO). Score = <strong>distance totale m</strong> (run + rameur). Individuels : règles de swap 750 / 1 km selon cat. (cf. 2026).</p>
+            </div>
+          </div>
+          <div class="zh-card" style="--zh:#9B5DE5">
+            <div class="zh-card-ico" aria-hidden="true">⚡</div>
+            <div class="zh-card-main">
+              <div class="zh-t">Recovery <span class="zh-sub">Zone 5 · 30 min</span></div>
+              <div class="zh-badges"><span class="is-off">Non scoré</span></div>
+              <p class="zh-d">Récup active / outils. Pas d’entrée au classement.</p>
+            </div>
+          </div>
+          <div class="zh-card" style="--zh:#00BFFF">
+            <div class="zh-card-ico" aria-hidden="true">⏱️</div>
+            <div class="zh-card-main">
+              <div class="zh-t">MetCon X <span class="zh-sub">Zone 6 · 25 min · Individu (ATHX / PRO)</span></div>
+              <div class="zh-badges"><span class="is-on">Scoré — temps</span><span>25 min time cap</span><span>Stagger</span></div>
+              <div class="zh-d zh-d--metcon">
+                <p class="zh-metcon-head">En <strong>solo</strong>, pas de catégorie <strong>LITE</strong> sur ce MetCon — seulement <strong>ATHX</strong> (charges ci‑dessous) et <strong>PRO</strong> (variantes entre parenthèses). <strong>25 min</strong> time cap · score = temps. <em>LITE</em> = format <strong>paires / équipes</strong> sur le site.</p>
+                <ol class="zh-metcon-steps">
+                  <li>Ski-Erg — <strong>45 cal H</strong> / <strong>30 cal F</strong></li>
+                  <li>30 single arm <strong>alt. GTOH</strong> — <strong>20 / 12,5 kg</strong> <span class="zh-pro">(PRO : 30 <strong>dual</strong> GTOH — 22,5 / 15 kg)</span></li>
+                  <li>30 m <strong>sandbag carry</strong> — <strong>50 / 30 kg</strong> <span class="zh-pro">(PRO : 70 / 40 kg)</span></li>
+                  <li>30 <strong>box jump overs</strong> — <strong>24″ / 20″</strong> <span class="zh-pro">(PRO : 30″ / 24″)</span></li>
+                  <li>30 m <strong>dual DB walking lunges</strong> — <strong>20 / 12,5 kg</strong> <span class="zh-pro">(PRO : dual <strong>front rack</strong> 22,5 / 15 kg)</span></li>
+                  <li>30 m <strong>burpee broad jumps</strong></li>
+                  <li>Ski-Erg — <strong>45 / 30 cal</strong></li>
+                </ol>
+                <p class="zh-metcon-foot">Format <strong>équipes 60 m / 60 reps</strong> (autre feuille) : <a href="https://athxgames.com/workouts/2026" target="_blank" rel="noopener noreferrer">Workouts 2026</a>. <strong>Stagger</strong> = planning (même heat).</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="zh-foot">Références officielles <strong>ATHX 2026</strong> : <a href="https://athxgames.com/workouts/2026" target="_blank" rel="noopener noreferrer">Workouts</a> · <a href="https://athxgames.com/movement-standards/2026" target="_blank" rel="noopener noreferrer">Movement standards</a> — briefings &amp; ajustements : orga (page Épreuves).</p>
+      </div>
+    </div>
+  </div>
 
   <!-- TIMECAP ALERT POPUP -->
   <div id="tc-overlay">
@@ -2077,6 +2396,30 @@ document.addEventListener('fullscreenchange',()=>{
   const btn=document.getElementById('fsBtn');
   if(btn) btn.textContent=document.fullscreenElement?'✕':'⛶';
 });
+
+/* ── AIDE ZONES (popup) ───────────────────────────────────────── */
+(function(){
+  const ov = document.getElementById('zones-help-overlay');
+  const open = () => {
+    if (!ov) return;
+    ov.classList.add('show');
+    ov.setAttribute('aria-hidden', 'false');
+  };
+  const close = () => {
+    if (!ov) return;
+    ov.classList.remove('show');
+    ov.setAttribute('aria-hidden', 'true');
+  };
+  document.getElementById('zonesHelpBtn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    open();
+  });
+  document.getElementById('zones-help-close')?.addEventListener('click', () => close());
+  ov?.addEventListener('click', () => close());
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && ov?.classList.contains('show')) close();
+  });
+})();
 
 /* ── ZONE TIMERS LIVE (chaque seconde, sans re-render) ─────────── */
 function tickZoneTimers(){

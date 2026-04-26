@@ -4,9 +4,98 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ATHX Epicure - Planning Heats</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
     <link rel="stylesheet" href="./assets/css/styles.css" />
+    <link rel="stylesheet" href="./assets/css/admin-bootstrap.css" />
     <style>
-      /* ── Table ─────────────────────────────────────────────────── */
+      /* ── Résumé (toutes largeurs) ─────────────────────────────── */
+      .summary-grid {
+        display: flex; flex-direction: column; gap: 8px;
+        font-size: 14px; color: var(--muted); font-family: var(--mono);
+        margin-bottom: 12px; padding: 12px; border-radius: 10px;
+        background: rgba(255,255,255,.03); border: 1px solid var(--border);
+      }
+      @media (min-width: 576px) {
+        .summary-grid { flex-direction: row; flex-wrap: wrap; gap: 16px; font-size: 12px; padding: 0; border: none; background: transparent; }
+      }
+      .summary-grid span strong { color: var(--text); }
+
+      /* ══ VUE MOBILE — cartes athlètes (lisible doigt / téléphone) ══ */
+      #planning-mobile { margin-bottom: 8px; }
+      .pm-heat {
+        margin-bottom: 20px; border-radius: 14px; overflow: hidden;
+        border: 1px solid var(--border); background: var(--card);
+        box-shadow: 0 2px 12px rgba(0,0,0,.2);
+      }
+      .pm-heat .heat-header {
+        display: block; width: 100%;
+        background: rgba(198,255,0,.1);
+        color: var(--gold);
+        font-family: var(--mono);
+        font-size: 13px; font-weight: 800; letter-spacing: .06em;
+        text-transform: uppercase; padding: 12px 14px;
+        border: none; border-bottom: 1px solid rgba(198,255,0,.2);
+        text-align: left; margin: 0;
+      }
+      .pm-heat.heat-past   .heat-header { opacity: .5; }
+      .pm-heat.heat-active .heat-header { background: rgba(198,255,0,.2); }
+      .pm-heat.heat-next   .heat-header { background: rgba(198,255,0,.07); }
+      .pm-heat .heat-endnote { display: block; font-size: 11px; font-weight: 600; text-transform: none; color: var(--muted); margin-top: 4px; letter-spacing: 0; }
+      .pm-ath {
+        padding: 0 0 4px; border-bottom: 1px solid var(--border);
+        background: rgba(0,0,0,.15);
+      }
+      .pm-ath:last-of-type { border-bottom: none; }
+      tr.athlete-past, .pm-ath.athlete-past { opacity: .45; }
+      tr.athlete-active, .pm-ath.athlete-active { background: rgba(198,255,0,.06); }
+      .pm-ath-head { padding: 12px 14px 4px; }
+      .pm-ath-name {
+        font-size: 18px; font-weight: 800; line-height: 1.2;
+        text-transform: uppercase; letter-spacing: .02em; word-wrap: break-word;
+        color: #fff;
+      }
+      .pm-ath-meta { font-size: 13px; color: var(--muted); margin-top: 4px; }
+      .pm-ath-meta .cat-badge { font-size: 10px; vertical-align: middle; }
+      .pm-zones { padding: 0 8px 12px; }
+      .pm-zone {
+        display: flex; align-items: center; justify-content: space-between; gap: 10px;
+        min-height: 48px; padding: 10px 10px; margin-bottom: 6px; border-radius: 10px;
+        background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+        font-size: 15px; flex-wrap: wrap;
+      }
+      .pm-zone:last-child { margin-bottom: 0; }
+      .pm-z-left { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+      .pm-z-num { font-family: var(--mono); font-size: 11px; font-weight: 800; color: var(--gold); }
+      .pm-z-tit { font-size: 14px; font-weight: 700; line-height: 1.2; }
+      .pm-z-scored .pm-z-tit { color: var(--text); }
+      .pm-z-free  .pm-z-num { color: var(--muted); }
+      .pm-z-time {
+        font-family: var(--mono);
+        font-size: 20px;
+        font-weight: 800;
+        flex-shrink: 0;
+        color: var(--text);
+      }
+      .pm-z-stag { font-size: 10px; font-family: var(--mono); color: var(--faint); width: 100%; text-align: right; margin-top: -4px; }
+      .pm-hint-legend {
+        font-size: 12px; color: var(--muted); margin: 0 0 12px; padding: 10px; border-radius: 8px;
+        background: rgba(255,255,255,.03); line-height: 1.4;
+      }
+      #live-status {
+        font-family: var(--mono); color: var(--muted);
+        display: flex; flex-wrap: wrap; align-items: center;
+        font-size: 14px; gap: 10px; line-height: 1.4; margin-bottom: 10px;
+      }
+      @media (min-width: 768px) { #live-status { font-size: 12px; gap: 20px; } }
+
+      .zone-legend { display: flex; flex-wrap: wrap; gap: 8px 10px; font-size: 12px; }
+      .zone-legend-item { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 8px; background: rgba(0,0,0,.2); }
+      @media (max-width: 767px) { .zone-legend { font-size: 13px; } }
+
+      /* Zone cells — mêmes états .z-* sur table td et .pm-zone */
+      .pm-zone.pulse-glow { animation: pulse-glow 1.6s ease-in-out infinite; }
+
+      /* ── Table (md+) ───────────────────────────────────────────── */
       .planning-table { width: 100%; border-collapse: collapse; font-size: 13px; }
       .planning-table th, .planning-table td { padding: 7px 10px; white-space: nowrap; }
       .planning-table th { font-size: 11px; font-family: var(--mono); text-align: center; }
@@ -14,8 +103,8 @@
       .planning-table td.athlete-name { text-align: left; font-weight: 600; }
       .planning-table td.athlete-cat  { text-align: left; }
 
-      /* ── Heat header ───────────────────────────────────────────── */
-      .heat-header td {
+      /* Heat header (table) ─────────────────────────────────────── */
+      tr.heat-header td {
         background: rgba(245,192,48,.08);
         color: var(--gold);
         font-family: var(--mono);
@@ -25,16 +114,21 @@
         border-top: 1px solid rgba(245,192,48,.2);
         text-align: left;
       }
-      .heat-header.heat-past   td { opacity: .4; }
-      .heat-header.heat-active td { background: rgba(245,192,48,.18); border-top-color: var(--gold); }
-      .heat-header.heat-next   td { background: rgba(245,192,48,.05); }
+      tr.heat-header.heat-past   td { opacity: .4; }
+      tr.heat-header.heat-active td { background: rgba(245,192,48,.18); border-top-color: var(--gold); }
+      tr.heat-header.heat-next   td { background: rgba(245,192,48,.05); }
 
-      /* ── Athlete rows ──────────────────────────────────────────── */
+      /* ── Athlete rows (table) ─────────────────────────────────── */
       tr.athlete-past   { opacity: .35; }
       tr.athlete-active { background: rgba(245,192,48,.04); }
 
-      /* ── Zone cells ────────────────────────────────────────────── */
-      .zone-time { font-family: var(--mono); font-size: 12px; }
+      /* ── Zone cells (horaires) — var(--text) : --foreground n’existe pas dans le thème */
+      .zone-time {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--text);
+        font-weight: 600;
+      }
 
       td.z-past    { color: var(--muted) !important; opacity: .45; }
       td.z-active  {
@@ -48,142 +142,52 @@
         font-weight: 700;
         background: rgba(245,166,35,.08);
       }
-      td.z-future  { color: var(--foreground); }
+      td.z-future  { color: var(--text) !important; }
+
+      .pm-zone.z-past   { color: var(--muted) !important; opacity: .5; }
+      .pm-zone.z-active {
+        color: var(--gold) !important; font-weight: 700;
+        background: rgba(245,192,48,.12);
+        border-color: rgba(245,192,48,.4);
+      }
+      .pm-zone.z-soon   { color: #f5a623 !important; font-weight: 700; background: rgba(245,166,35,.1); }
+      .pm-zone.z-future { color: var(--text) !important; }
 
       /* Clignotement pour la zone active */
       @keyframes pulse-glow {
         0%, 100% { box-shadow: inset 0 0 0 1px rgba(245,192,48,.5); }
         50%       { box-shadow: inset 0 0 0 2px rgba(245,192,48,.9), 0 0 8px rgba(245,192,48,.3); }
       }
-      td.z-active { animation: pulse-glow 1.6s ease-in-out infinite; }
+      td.z-active, .pm-zone.z-active { animation: pulse-glow 1.6s ease-in-out infinite; }
 
       /* ── Zone header cols ──────────────────────────────────────── */
       .zone-scored-col   { color: var(--gold); }
       .zone-free-col     { color: var(--muted); }
       th.zh-active       { color: var(--gold) !important; font-weight: 700; border-bottom: 2px solid var(--gold); }
 
-      /* ── Status bar ────────────────────────────────────────────── */
-      #live-status {
-        font-family: var(--mono);
-        font-size: 12px;
-        color: var(--muted);
-        display: flex;
-        gap: 20px;
-        flex-wrap: wrap;
-        align-items: center;
-        margin-bottom: 10px;
-      }
-      /* ── Misc ──────────────────────────────────────────────────── */
-      .summary-grid {
-        display: flex; gap: 16px; flex-wrap: wrap;
-        font-size: 12px; color: var(--muted); font-family: var(--mono); margin-bottom: 8px;
-      }
-      .summary-grid span strong { color: var(--text); }
       .zone-dot-transition { background: var(--border-md); }
-
-      /* #print-btn utilise .print-btn depuis styles.css */
-
-      /* ══════════════════════════════════════════════════════════
-         STYLES D'IMPRESSION
-      ══════════════════════════════════════════════════════════ */
-      @media print {
-        /* Reset général */
-        *, *::before, *::after { box-sizing:border-box; }
-        html, body {
-          background:#fff !important; color:#000 !important;
-          font-family: 'Arial', sans-serif !important;
-          font-size:11pt; margin:0; padding:0;
-          -webkit-print-color-adjust: exact;
-          print-color-adjust: exact;
-        }
-
-        /* Masquer tout ce qui n'est pas utile */
-        header, nav, #live-status, .zone-legend, #print-btn,
-        .summary-grid, #next-up-label { display:none !important; }
-
-        main { padding:0 !important; }
-        .card { box-shadow:none !important; border:none !important; padding:0 !important; margin:0 !important; }
-
-        /* En-tête d'impression */
-        #print-header {
-          display:flex !important;
-          align-items:center; justify-content:space-between;
-          border-bottom:3px solid #000; padding-bottom:10px; margin-bottom:16px;
-        }
-        .ph-title { font-size:22pt; font-weight:900; letter-spacing:.06em; }
-        .ph-subtitle { font-size:11pt; color:#555; margin-top:3px; }
-        .ph-date { font-size:10pt; color:#555; text-align:right; }
-        .ph-logo { font-size:28pt; font-weight:900; color:#000; }
-
-        /* Table */
-        .planning-table { border-collapse:collapse !important; width:100% !important; font-size:9pt !important; }
-        .planning-table th {
-          background:#111 !important; color:#fff !important;
-          font-size:8pt !important; padding:6px 8px !important;
-          border:1px solid #999 !important; text-align:center !important;
-        }
-        .planning-table th.zone-scored-col { background:#1a1a1a !important; color:#C6FF00 !important; }
-        .planning-table td { border:1px solid #ddd !important; padding:5px 8px !important; }
-
-        /* Heat header */
-        .heat-header td {
-          background:#222 !important; color:#C6FF00 !important;
-          font-weight:700 !important; font-size:9pt !important;
-          padding:5px 10px !important; border:1px solid #999 !important;
-          letter-spacing:.04em !important;
-        }
-        /* Athlete rows alternées */
-        tr.athlete-row:nth-child(even) td { background:#f8f8f8 !important; }
-        tr.athlete-row td { color:#000 !important; opacity:1 !important; }
-
-        /* Badges catégorie */
-        .cat-badge { border:1px solid #ccc !important; color:#000 !important; font-size:8pt !important; }
-        .cat-ATHX { border-color:#C6FF00 !important; background:#C6FF0020 !important; }
-        .cat-Lite { border-color:#60A5FA !important; background:#60A5FA20 !important; }
-        .cat-Pro  { border-color:#FF4444 !important; background:#FF444420 !important; }
-
-        /* Zone times */
-        .zone-time { font-size:9pt !important; }
-        .zone-scored-col-base { color:#000 !important; font-weight:600 !important; }
-
-        /* Supprimer les animations */
-        * { animation:none !important; transition:none !important; }
-
-        /* Forcer une page par heat si beaucoup d'athlètes */
-        tr.heat-header { page-break-before:auto; }
-
-        /* Pied de page */
-        #print-footer {
-          display:flex !important; justify-content:space-between;
-          margin-top:16px; padding-top:8px; border-top:1px solid #ccc;
-          font-size:8pt; color:#888;
-        }
-      }
-      /* Masquer les éléments print en mode normal */
-      #print-header, #print-footer { display:none; }
     </style>
   </head>
   <body>
-    <header><h1>ATHX · Epicure</h1><nav class="menu">
-        <a href="./index.html">Accueil</a>
-        <a href="./tv.html" target="_blank" rel="noopener noreferrer">📺 Dashboard TV</a>
-        <a href="./equipes.html">Équipes</a>
-        <a class="active" href="./planning.html">Planning heats</a>
-        <a href="./epreuves.html">Épreuves</a>
-        <a href="./scores.html">Saisie scores</a>
-        <a href="./classement.html">Classement</a><a href="./ops.html">Ops</a>
-      </nav>
-    </header>
-    <main>
-      <!-- En-tête visible uniquement à l'impression -->
-      <div id="print-header">
-        <div>
-          <div class="ph-title" id="ph-title">ATHX · Epicure</div>
-          <div class="ph-subtitle" id="ph-subtitle">Planning des Heats</div>
+    <nav class="navbar navbar-expand-md navbar-dark border-bottom border-secondary admin-navbar">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="./index.html"><span class="fw-bold">ATHX</span> <span class="text-secondary" style="font-size:0.88rem">· Athlètes</span></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#athleteNav" aria-controls="athleteNav" aria-expanded="false" aria-label="Menu">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="athleteNav">
+          <ul class="navbar-nav ms-md-auto flex-wrap py-2 py-md-0">
+            <li class="nav-item"><a class="nav-link" href="./portail.html">Portail</a></li>
+            <li class="nav-item"><a class="nav-link active" href="./planning.html">Planning</a></li>
+            <li class="nav-item"><a class="nav-link" href="./epreuves.html">Épreuves</a></li>
+            <li class="nav-item"><a class="nav-link" href="./classement.html">Classement</a></li>
+            <li class="nav-item"><a class="nav-link" href="./athlete.html">Mes résultats</a></li>
+            <li class="nav-item"><a class="nav-link text-secondary" href="./admin.html" title="Espace gérant">Espace gérant</a></li>
+          </ul>
         </div>
-        <div class="ph-date" id="ph-date"></div>
       </div>
-
+    </nav>
+    <main class="container-fluid px-2 px-sm-3 py-3 py-md-4">
       <section class="card">
         <div class="summary-grid">
           <span>Départ toutes les <strong id="interval">—</strong> min</span>
@@ -191,28 +195,25 @@
           <span>Premier départ : <strong id="start-time">—</strong></span>
           <span><strong id="heat-count">—</strong> heats au total</span>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
-          <button id="print-btn" class="print-btn" onclick="doPrint()">🖨️ Imprimer le planning</button>
-        </div>
         <div id="live-status">
           <span><span class="dot-live"></span> Temps réel</span>
           <span id="clock">—</span>
           <span id="next-up-label"></span>
         </div>
         <div class="zone-legend" id="zone-legend"></div>
-        <div style="overflow-x:auto">
-          <table class="planning-table">
+        <p class="pm-hint-legend d-md-none mb-0">
+          Un <strong>bloc par athlète</strong> : horaire de chaque <strong>zone</strong> (défilement vertical). En surbrillance / pulsation = zone en cours.
+        </p>
+        <div id="planning-mobile" class="d-md-none">
+          <div id="planning-mobile-body" class="pt-2"></div>
+        </div>
+        <div id="planning-desktop" class="d-none d-md-block table-responsive" style="overflow-x:auto">
+          <table class="planning-table w-100">
             <thead id="planning-head"></thead>
             <tbody id="planning-tbody"></tbody>
           </table>
         </div>
       </section>
-
-      <!-- Pied de page impression -->
-      <div id="print-footer">
-        <span id="pf-comp"></span>
-        <span>Imprimé le <span id="pf-date"></span></span>
-      </div>
     </main>
     <script src="./assets/js/data.js"></script>
     <script>
@@ -295,7 +296,7 @@
           const heatEnd   = heatStart + offsetsCache[offsetsCache.length - 1] + (zonesCache[zonesCache.length - 1]?.durationMinutes || 0);
 
           const heatTr = document.createElement("tr");
-          heatTr.className = "heat-header";
+          heatTr.className = "heat-header heat-header-row";
           heatTr.dataset.heatStart = heatStart;
           heatTr.dataset.heatEnd   = heatEnd;
           heatTr.dataset.heatId    = heat.heat;
@@ -341,6 +342,75 @@
             tbody.appendChild(tr);
           });
         });
+
+        buildMobileView();
+      }
+
+      function buildMobileView() {
+        const root = document.getElementById("planning-mobile-body");
+        if (!root) return;
+        root.innerHTML = "";
+        const stagger = Number(_planningState?.config?.metconStaggerMinutes ?? 2);
+
+        scheduleCache.forEach((heat) => {
+          const heatStart = parseHm(heat.startTime);
+          const heatEnd   = heatStart + offsetsCache[offsetsCache.length - 1] + (zonesCache[zonesCache.length - 1]?.durationMinutes || 0);
+
+          const section = document.createElement("section");
+          section.className = "pm-heat heat-header-row";
+          section.dataset.heatStart = String(heatStart);
+          section.dataset.heatEnd = String(heatEnd);
+          section.dataset.heatId = String(heat.heat);
+          const head = document.createElement("div");
+          head.className = "heat-header";
+          head.innerHTML = `Heat ${heat.heat} — départ <strong>${heat.startTime}</strong>
+            <span class="heat-endnote">· fin ~ ${toHm(heatEnd)}</span>`;
+          section.appendChild(head);
+
+          heat.athletes.forEach((athlete, athIdx) => {
+            const name = `${athlete.lastName || ""} ${athlete.firstName || ""}`.trim() || athlete.name || "—";
+            const cat  = athlete.category || "—";
+            const gen  = athlete.gender   || "";
+            const zonesHtml = zonesCache.map((z, i) => {
+              let zStart = heatStart + offsetsCache[i];
+              if (z.id === "ev_metcon" && stagger > 0) zStart += athIdx * stagger;
+              const zEnd = zStart + (z.durationMinutes || 0);
+              const isStaggered = z.id === "ev_metcon" && stagger > 0 && athIdx > 0;
+              const zLabel = String(z.name || "").replace(" Zone", "");
+              const titClass = z.scored ? "pm-z-scored" : "pm-z-free";
+              const stag = isStaggered
+                ? `<div class="pm-z-stag" title="Départ décalé MetCon">+${athIdx * stagger} min (MetCon)</div>`
+                : "";
+              return `<div class="pm-zone"
+                data-zstart="${zStart}" data-zend="${zEnd}" data-zid="${z.id}"
+                ${isStaggered ? 'title="Départ décalé MetCon"' : ""}>
+                <div class="pm-z-left">
+                  <span class="pm-z-num">Z${z.zone}</span>
+                  <span class="pm-z-tit ${titClass}">${zLabel}</span>
+                </div>
+                <div class="pm-z-time zone-time">${toHm(zStart)}</div>
+                ${stag}
+              </div>`;
+            }).join("");
+
+            const ath = document.createElement("div");
+            ath.className = "pm-ath athlete-row";
+            ath.dataset.heatStart = String(heatStart);
+            ath.dataset.heatEnd = String(heatEnd);
+            ath.innerHTML = `
+              <div class="pm-ath-head">
+                <div class="pm-ath-name athlete-name">${name}</div>
+                <div class="pm-ath-meta">
+                  <span class="cat-badge cat-${cat}">${cat}</span>
+                  <span style="font-size:12px;color:var(--muted);margin-left:4px">${gen}</span>
+                </div>
+              </div>
+              <div class="pm-zones">${zonesHtml}</div>`;
+            section.appendChild(ath);
+          });
+
+          root.appendChild(section);
+        });
       }
 
       // ── Mise à jour temps réel (chaque seconde) ──────────────────
@@ -354,39 +424,43 @@
 
         // ── Mettre à jour les classes ─────────────────────────────
 
-        // Heat headers
-        document.querySelectorAll("tr.heat-header").forEach((tr) => {
-          const hs = Number(tr.dataset.heatStart);
-          const he = Number(tr.dataset.heatEnd);
-          tr.classList.remove("heat-past","heat-active","heat-next");
-          if (now >= he)       tr.classList.add("heat-past");
-          else if (now >= hs)  tr.classList.add("heat-active");
-          else                 tr.classList.add("heat-next");
+        // Heats (table tr + blocs .pm-heat)
+        document.querySelectorAll(".heat-header-row").forEach((el) => {
+          const hs = Number(el.dataset.heatStart);
+          const he = Number(el.dataset.heatEnd);
+          el.classList.remove("heat-past","heat-active","heat-next");
+          if (now >= he)      el.classList.add("heat-past");
+          else if (now >= hs) el.classList.add("heat-active");
+          else                el.classList.add("heat-next");
         });
 
-        // Athlete rows
-        document.querySelectorAll("tr.athlete-row").forEach((tr) => {
-          const hs = Number(tr.dataset.heatStart);
-          const he = Number(tr.dataset.heatEnd);
-          tr.classList.remove("athlete-past","athlete-active");
-          if (now >= he)      tr.classList.add("athlete-past");
-          else if (now >= hs) tr.classList.add("athlete-active");
+        // Lignes athlètes (table + cartes)
+        document.querySelectorAll("tr.athlete-row, .pm-ath.athlete-row").forEach((el) => {
+          const hs = Number(el.dataset.heatStart);
+          const he = Number(el.dataset.heatEnd);
+          el.classList.remove("athlete-past","athlete-active");
+          if (now >= he)      el.classList.add("athlete-past");
+          else if (now >= hs) el.classList.add("athlete-active");
         });
 
-        // Zone cells
-        document.querySelectorAll("td[data-zstart]").forEach((td) => {
-          const zs = Number(td.dataset.zstart);
-          const ze = Number(td.dataset.zend);
-          td.classList.remove("z-past","z-active","z-soon","z-future");
+        // Cellules de zone (table + cartes)
+        document.querySelectorAll("td[data-zstart], .pm-zone[data-zstart]").forEach((cell) => {
+          const zs = Number(cell.dataset.zstart);
+          const ze = Number(cell.dataset.zend);
+          cell.classList.remove("z-past","z-active","z-soon","z-future");
           if (now >= ze) {
-            td.classList.add("z-past");
+            cell.classList.add("z-past");
           } else if (now >= zs) {
-            td.classList.add("z-active");
+            cell.classList.add("z-active");
           } else if (zs - now <= SOON_MINUTES) {
-            td.classList.add("z-soon");
-            if (zs < nextEventMin) { nextEventMin = zs; nextEventLabel = td.closest("tr")?.querySelector(".athlete-name")?.textContent; }
+            cell.classList.add("z-soon");
+            if (zs < nextEventMin) {
+              const row = cell.closest("tr, .pm-ath");
+              nextEventMin = zs;
+              nextEventLabel = row?.querySelector(".athlete-name")?.textContent?.trim() || "";
+            }
           } else {
-            td.classList.add("z-future");
+            cell.classList.add("z-future");
           }
         });
 
@@ -394,19 +468,22 @@
         zonesCache.forEach((z) => {
           const th = document.querySelector(`#zh-${z.id}`);
           if (!th) return;
-          const hasActive = document.querySelector(`td[data-zid="${z.id}"].z-active`);
+          const hasActive = document.querySelector(
+            `td[data-zid="${z.id}"].z-active, .pm-zone[data-zid="${z.id}"].z-active`
+          );
           th.classList.toggle("zh-active", !!hasActive);
         });
 
         // ── Label "prochain départ" ───────────────────────────────
         if (nextEventMin < Infinity) {
           const diff = nextEventMin - now;
-          nextUpLabel.innerHTML = `<span class="next-up">⚡ Prochain départ dans ${fmtCountdown(diff)}</span>`;
+          const who = nextEventLabel ? ` — ${nextEventLabel}` : "";
+          nextUpLabel.innerHTML = `<span class="next-up">⚡ Prochain départ${who} dans ${fmtCountdown(diff)}</span>`;
         } else {
           // Trouver la prochaine zone future la plus proche
           let soonMin = Infinity;
-          document.querySelectorAll("td[data-zstart]").forEach((td) => {
-            const zs = Number(td.dataset.zstart);
+          document.querySelectorAll("td[data-zstart], .pm-zone[data-zstart]").forEach((cell) => {
+            const zs = Number(cell.dataset.zstart);
             if (zs > now && zs < soonMin) soonMin = zs;
           });
           if (soonMin < Infinity && soonMin - now <= 30) {
@@ -428,27 +505,10 @@
         tickTimer = setInterval(tick, 1000);
       }
 
-      function doPrint() {
-        const state  = AthxStore.loadState();
-        const cfg    = state.config || {};
-        const compName = cfg.name || "ATHX Epicure";
-        const compDate = cfg.date
-          ? new Date(cfg.date).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})
-          : "";
-        const now = new Date().toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
-
-        document.getElementById("ph-title").textContent    = compName;
-        document.getElementById("ph-subtitle").textContent = `Planning des Heats — ${scheduleCache.length} heats · départ toutes les ${cfg.heatIntervalMinutes||20} min`;
-        document.getElementById("ph-date").innerHTML       = `<strong>${compDate}</strong><br>Départ : ${cfg.startTime||"08:00"}`;
-        document.getElementById("pf-comp").textContent     = compName;
-        document.getElementById("pf-date").textContent     = now;
-
-        window.print();
-      }
-
       AthxStore.whenCloudReady()
         .then(() => render())
         .catch((err) => alert(`Cloud indisponible: ${err.message || err}`));
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
   </body>
 </html>

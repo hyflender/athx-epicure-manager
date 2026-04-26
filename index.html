@@ -3,208 +3,61 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ATHX Epicure - Gestion compétition</title>
+    <title>ATHX · Epicure</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
     <link rel="stylesheet" href="./assets/css/styles.css" />
-    <link rel="stylesheet" href="./assets/css/auth.css" />
+    <link rel="stylesheet" href="./assets/css/admin-bootstrap.css" />
+    <style>
+      .gate-hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; }
+      .gate-title { font-size: clamp(1.5rem, 4vw, 2.2rem); font-weight: 900; letter-spacing: 0.06em; }
+      .gate-card { border-radius: 16px; border: 1px solid var(--border); background: var(--card); padding: 1.75rem; height: 100%; transition: border-color 0.2s, box-shadow 0.2s; }
+      .gate-card:hover { border-color: var(--accent-border); box-shadow: 0 8px 32px rgba(0,0,0,.35); }
+      .gate-card h2 { font-size: 1.15rem; margin-bottom: 0.5rem; }
+      .gate-card p { font-size: 0.92rem; color: var(--muted); margin-bottom: 1rem; }
+      .gate-link { display: inline-block; font-weight: 700; text-decoration: none; }
+    </style>
   </head>
   <body>
-    <header><h1>ATHX · Epicure</h1><nav class="menu">
-        <a class="active" href="./index.html">Accueil</a>
-        <a href="./tv.html" target="_blank" rel="noopener noreferrer">📺 Dashboard TV</a>
-        <a href="./equipes.html">Équipes</a>
-        <a href="./planning.html">Planning heats</a>
-        <a href="./epreuves.html">Épreuves</a>
-        <a href="./scores.html">Saisie scores</a>
-        <a href="./classement.html">Classement</a><a href="./ops.html">Ops</a>
-      </nav>
-    </header>
-
-    <main class="grid grid-2">
-      <section class="card">
-        <h2>Configuration rapide</h2>
-        <p class="muted">
-          Définis ici les infos principales de la compétition.
-        </p>
-        <form id="config-form">
-          <label>Nom de la compétition <input id="name" required /></label>
-          <label>Lieu <input id="location" /></label>
-          <label>Date <input id="date" type="date" /></label>
-          <label>Heure du 1er départ <input id="start-time" type="time" value="08:00" /></label>
-          <label>Intervalle départ (minutes) <input id="interval" type="number" min="1" value="20" /></label>
-          <label>Athlètes par heat <input id="athletes-per-heat" type="number" min="1" value="2" /></label>
-          <label>Décalage MetCon entre athlètes (min)
-            <input id="metcon-stagger" type="number" min="0" step="1" value="2" title="Délai en minutes entre chaque athlète d'un même heat pour le MetCon X (équipement partagé)" />
-          </label>
-          <button class="primary" type="submit">Enregistrer</button>
-        </form>
-      </section>
-
-      <section class="card">
-        <h2>Compétition active</h2>
-        <p class="muted">Chaque compétition est isolée dans le cloud via son identifiant.</p>
-        <div class="row">
-          <label>
-            Sélectionner une compétition existante
-            <select id="competition-select"></select>
-          </label>
-          <button id="competition-refresh" type="button">Rafraîchir la liste</button>
-          <button id="competition-open-selected" type="button" class="primary">Ouvrir la sélection</button>
+    <div class="container gate-hero py-5">
+      <div class="text-center mb-4 mb-md-5">
+        <div class="font-monospace text-muted small text-uppercase letter-spacing-2 mb-2">ATHX Games</div>
+        <h1 class="gate-title">Epicure Social Club</h1>
+        <p class="text-muted mt-2 mb-0">Choisis ton espace</p>
+      </div>
+      <div class="row g-4 justify-content-center">
+        <div class="col-12 col-md-6 col-lg-5">
+          <div class="gate-card">
+            <h2 class="text-light">Espace athlètes</h2>
+            <p>Planning des heats, classement, épreuves et recherche de tes résultats (toutes compétitions).</p>
+            <a class="gate-link" style="color: var(--accent)" href="./portail.html">Entrer →</a>
+          </div>
         </div>
-        <form id="competition-form">
-          <label>ID compétition (slug) <input id="competition-ref" placeholder="ex: epicure-2026" /></label>
-          <div class="row">
-            <button class="primary" type="submit">Créer / ouvrir cette compétition</button>
+        <div class="col-12 col-md-6 col-lg-5">
+          <div class="gate-card">
+            <h2 class="text-light">Organisation</h2>
+            <p>Configuration, équipes, saisie des scores, ops et écran TV. Accès protégé par mot de passe.</p>
+            <a class="gate-link" style="color: var(--muted)" href="./admin.html">Accès administration →</a>
           </div>
-        </form>
-        <p id="competition-current" class="muted"></p>
-        <p id="competition-list-status" class="muted"></p>
-      </section>
-
-      <section class="card">
-        <h2>🔐 Sécurité — Mot de passe admin</h2>
-        <p class="muted">Protège la configuration et la saisie de scores.</p>
-        <form id="password-form">
-          <label>Nouveau mot de passe
-            <input type="password" id="new-password" placeholder="Min. 4 caractères" autocomplete="new-password" />
-          </label>
-          <label>Confirmer
-            <input type="password" id="confirm-password" placeholder="Répéter le mot de passe" autocomplete="new-password" />
-          </label>
-          <div class="row">
-            <button class="primary" type="submit">Changer le mot de passe</button>
-          </div>
-          <p id="password-status" class="muted" style="min-height:18px"></p>
-        </form>
-      </section>
-
-    </main>
-
-        <script src="./assets/js/auth.js"></script>
+        </div>
+      </div>
+      <p class="text-center small text-muted mt-5 mb-0">
+        Le paramètre d’URL <code class="text-secondary">?comp=…</code> est conservé pour la compétition active.
+      </p>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     <script src="./assets/js/data.js"></script>
     <script>
-      const form = document.querySelector("#config-form");
-      const nameInput = document.querySelector("#name");
-      const locationInput = document.querySelector("#location");
-      const dateInput = document.querySelector("#date");
-      const startTimeInput = document.querySelector("#start-time");
-      const intervalInput = document.querySelector("#interval");
-      const perHeatInput = document.querySelector("#athletes-per-heat");
-      const metconStaggerInput = document.querySelector("#metcon-stagger");
-      const competitionForm = document.querySelector("#competition-form");
-      const competitionRefInput = document.querySelector("#competition-ref");
-      const competitionCurrent = document.querySelector("#competition-current");
-      const competitionSelect = document.querySelector("#competition-select");
-      const competitionRefreshBtn = document.querySelector("#competition-refresh");
-      const competitionOpenSelectedBtn = document.querySelector("#competition-open-selected");
-      const competitionListStatus = document.querySelector("#competition-list-status");
-
-      function refresh() {
-        const state = AthxStore.loadState();
-        nameInput.value = state.config.competitionName || "";
-        locationInput.value = state.config.location || "";
-        dateInput.value = state.config.date || "";
-        startTimeInput.value = state.config.startTime || "08:00";
-        intervalInput.value = Number(state.config.heatIntervalMinutes || 20);
-        perHeatInput.value = Number(state.config.athletesPerHeat || 2);
-        metconStaggerInput.value = Number(state.config.metconStaggerMinutes ?? 2);
-        const activeRef = AthxStore.getRemoteConfig().projectRef;
-        competitionRefInput.value = activeRef;
-        competitionCurrent.textContent = `Compétition active : ${activeRef}`;
-      }
-
-      function goToCompetition(ref) {
-        const safe = AthxStore.sanitizeCompetitionRef(ref);
-        const target = AthxStore.buildCompetitionUrl(safe, false);
-        window.location.href = target;
-      }
-
-      async function refreshCompetitionList() {
-        try {
-          competitionListStatus.textContent = "Chargement des compétitions...";
-          const items = await AthxStore.listCompetitions();
-          const active = AthxStore.getRemoteConfig().projectRef;
-          const allIds = Array.from(new Set([active, ...items.map((x) => x.id).filter(Boolean)]));
-          competitionSelect.innerHTML = allIds
-            .map((id) => {
-              const row = items.find((x) => x.id === id);
-              const dt = row?.updatedAt ? ` (maj ${new Date(row.updatedAt).toLocaleString()})` : "";
-              const selected = id === active ? "selected" : "";
-              return `<option value="${id}" ${selected}>${id}${dt}</option>`;
-            })
-            .join("");
-          competitionListStatus.textContent = `${allIds.length} compétition(s) disponible(s).`;
-        } catch (err) {
-          competitionListStatus.textContent = `Erreur liste compétitions: ${err.message || err}`;
-        }
-      }
-
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const state = AthxStore.loadState();
-        state.config.competitionName = nameInput.value.trim();
-        state.config.location = locationInput.value.trim();
-        state.config.date = dateInput.value;
-        state.config.startTime = startTimeInput.value || "08:00";
-        state.config.heatIntervalMinutes = Number(intervalInput.value || 20);
-        state.config.athletesPerHeat = Number(perHeatInput.value || 2);
-        state.config.metconStaggerMinutes = Number(metconStaggerInput.value ?? 2);
-        AthxStore.saveState(state);
-        try {
-          await AthxStore.pushRemote(state);
-        } catch (err) {
-          console.error("Erreur de sauvegarde cloud immédiate", err);
-          alert(`Configuration enregistrée localement en mémoire, mais échec cloud: ${err.message || err}`);
-        }
-        refresh();
-      });
-
-      competitionForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        goToCompetition(competitionRefInput.value);
-      });
-
-      competitionRefreshBtn.addEventListener("click", () => {
-        refreshCompetitionList();
-      });
-
-      competitionOpenSelectedBtn.addEventListener("click", () => {
-        if (!competitionSelect.value) return;
-        goToCompetition(competitionSelect.value);
-      });
-
-      async function bootstrapCloud() {
-        try {
-          await AthxStore.whenCloudReady();
-        } catch (_) {}
-        refresh();
-        refreshCompetitionList();
-      }
-
-      // ── Changement de mot de passe ────────────────────────────
-      document.querySelector("#password-form")?.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const np  = document.querySelector("#new-password").value;
-        const cp  = document.querySelector("#confirm-password").value;
-        const st  = document.querySelector("#password-status");
-        if (np !== cp) { st.style.color = "var(--danger)"; st.textContent = "Les mots de passe ne correspondent pas."; return; }
-        try {
-          await AthxAuth.changePassword(np);
-          st.style.color = "var(--ok)";
-          st.textContent = "✓ Mot de passe mis à jour.";
-          document.querySelector("#new-password").value = "";
-          document.querySelector("#confirm-password").value = "";
-          setTimeout(() => { st.textContent = ""; }, 4000);
-        } catch (err) {
-          st.style.color = "var(--danger)";
-          st.textContent = err.message;
-        }
-      });
-
-      // ── Auth ──────────────────────────────────────────────────
-      AthxAuth.requireAuth({ onSuccess: () => {
-        bootstrapCloud();
-        injectLogoutBtn();
-      }});
+      (function preserveComp() {
+        const ref = typeof AthxStore.getCompetitionRefFromUrl === "function" ? AthxStore.getCompetitionRefFromUrl() : null;
+        if (!ref) return;
+        document.querySelectorAll('a[href$="portail.html"], a[href$="admin.html"]').forEach((a) => {
+          try {
+            const u = new URL(a.getAttribute("href"), window.location.href);
+            u.searchParams.set("comp", ref);
+            a.setAttribute("href", u.pathname + u.search);
+          } catch (_) {}
+        });
+      })();
     </script>
   </body>
 </html>
