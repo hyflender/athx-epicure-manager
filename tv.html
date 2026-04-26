@@ -918,15 +918,35 @@ function fmtScore(sc, ev){
 }
 
 /* ── SCHEDULE HELPERS ──────────────────────────────────────────── */
+function getMetconStagger(state){
+  return Number(state?.config?.metconStaggerMinutes ?? 2);
+}
+
+// Retourne le temps de départ MetCon d'un athlète donné dans un heat
+// (index = position de l'athlète dans le tableau athletes du heat)
+function metconStartFor(baseZs, athIdx, stagger){
+  return baseZs + athIdx * stagger;
+}
+
 function fullSchedule(state){
   const schedule=AthxStore.buildHeatSchedule(state);
   const events=[...state.events].sort((a,b)=>a.order-b.order);
+  const stagger=getMetconStagger(state);
   const entries=[];
   schedule.forEach(({heat,startTime,athletes})=>{
     let cursor=parseHm(startTime);
     events.forEach(ev=>{
       const zs=cursor, ze=cursor+ev.durationMinutes; cursor=ze;
-      entries.push({heat,athletes,eventId:ev.id,ev,zs,ze});
+      if(ev.id==='ev_metcon' && stagger>0){
+        // Une entrée par athlète avec décalage
+        athletes.forEach((a,i)=>{
+          const azs=metconStartFor(zs,i,stagger);
+          const aze=azs+ev.durationMinutes;
+          entries.push({heat,athletes:[a],eventId:ev.id,ev,zs:azs,ze:aze});
+        });
+      } else {
+        entries.push({heat,athletes,eventId:ev.id,ev,zs,ze});
+      }
     });
   });
   return entries.sort((a,b)=>a.zs-b.zs||a.heat-b.heat);
@@ -935,17 +955,30 @@ function fullSchedule(state){
 function getZoneMap(state, nm){
   const schedule=AthxStore.buildHeatSchedule(state);
   const events=[...state.events].sort((a,b)=>a.order-b.order);
+  const stagger=getMetconStagger(state);
   const zm={};
   events.forEach(e=>{ zm[e.id]=[]; });
   schedule.forEach(({heat,startTime,athletes})=>{
     let cursor=parseHm(startTime);
     events.forEach(ev=>{
       const zs=cursor, ze=cursor+ev.durationMinutes; cursor=ze;
-      if(nm>=zs&&nm<ze){
-        athletes.forEach(a=>{
-          const sc=state.scores.find(s=>s.teamId===a.id&&s.eventId===ev.id)||null;
-          zm[ev.id].push({athlete:a,heat,elapsed:nm-zs,remaining:ze-nm,score:sc});
+      if(ev.id==='ev_metcon' && stagger>0){
+        // Chaque athlète a sa propre fenêtre MetCon
+        athletes.forEach((a,i)=>{
+          const azs=metconStartFor(zs,i,stagger);
+          const aze=azs+ev.durationMinutes;
+          if(nm>=azs&&nm<aze){
+            const sc=state.scores.find(s=>s.teamId===a.id&&s.eventId===ev.id)||null;
+            zm[ev.id].push({athlete:a,heat,elapsed:nm-azs,remaining:aze-nm,score:sc});
+          }
         });
+      } else {
+        if(nm>=zs&&nm<ze){
+          athletes.forEach(a=>{
+            const sc=state.scores.find(s=>s.teamId===a.id&&s.eventId===ev.id)||null;
+            zm[ev.id].push({athlete:a,heat,elapsed:nm-zs,remaining:ze-nm,score:sc});
+          });
+        }
       }
     });
   });

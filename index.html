@@ -32,6 +32,9 @@
           <label>Heure du 1er départ <input id="start-time" type="time" value="08:00" /></label>
           <label>Intervalle départ (minutes) <input id="interval" type="number" min="1" value="20" /></label>
           <label>Athlètes par heat <input id="athletes-per-heat" type="number" min="1" value="2" /></label>
+          <label>Décalage MetCon entre athlètes (min)
+            <input id="metcon-stagger" type="number" min="0" step="1" value="2" title="Délai en minutes entre chaque athlète d'un même heat pour le MetCon X (équipement partagé)" />
+          </label>
           <button class="primary" type="submit">Enregistrer</button>
         </form>
       </section>
@@ -86,6 +89,7 @@
       const startTimeInput = document.querySelector("#start-time");
       const intervalInput = document.querySelector("#interval");
       const perHeatInput = document.querySelector("#athletes-per-heat");
+      const metconStaggerInput = document.querySelector("#metcon-stagger");
       const competitionForm = document.querySelector("#competition-form");
       const competitionRefInput = document.querySelector("#competition-ref");
       const competitionCurrent = document.querySelector("#competition-current");
@@ -102,6 +106,7 @@
         startTimeInput.value = state.config.startTime || "08:00";
         intervalInput.value = Number(state.config.heatIntervalMinutes || 20);
         perHeatInput.value = Number(state.config.athletesPerHeat || 2);
+        metconStaggerInput.value = Number(state.config.metconStaggerMinutes ?? 2);
         const activeRef = AthxStore.getRemoteConfig().projectRef;
         competitionRefInput.value = activeRef;
         competitionCurrent.textContent = `Compétition active : ${activeRef}`;
@@ -142,6 +147,7 @@
         state.config.startTime = startTimeInput.value || "08:00";
         state.config.heatIntervalMinutes = Number(intervalInput.value || 20);
         state.config.athletesPerHeat = Number(perHeatInput.value || 2);
+        state.config.metconStaggerMinutes = Number(metconStaggerInput.value ?? 2);
         AthxStore.saveState(state);
         try {
           await AthxStore.pushRemote(state);

@@ -305,16 +305,24 @@
           </td>`;
           tbody.appendChild(heatTr);
 
-          heat.athletes.forEach((athlete) => {
+          const stagger = Number(_planningState?.config?.metconStaggerMinutes ?? 2);
+
+          heat.athletes.forEach((athlete, athIdx) => {
             const name = `${athlete.lastName || ""} ${athlete.firstName || ""}`.trim() || athlete.name || "—";
             const cat  = athlete.category || "—";
             const gen  = athlete.gender   || "";
 
             const zoneCells = zonesCache.map((z, i) => {
-              const zStart = heatStart + offsetsCache[i];
-              const zEnd   = zStart + (z.durationMinutes || 0);
+              let zStart = heatStart + offsetsCache[i];
+              // Décalage MetCon : chaque athlète du heat part plus tard
+              if (z.id === "ev_metcon" && stagger > 0) zStart += athIdx * stagger;
+              const zEnd = zStart + (z.durationMinutes || 0);
+              const isStaggered = z.id === "ev_metcon" && stagger > 0 && athIdx > 0;
               return `<td class="zone-time ${z.scored ? "zone-scored-col-base" : ""}"
-                          data-zstart="${zStart}" data-zend="${zEnd}" data-zid="${z.id}">${toHm(zStart)}</td>`;
+                          data-zstart="${zStart}" data-zend="${zEnd}" data-zid="${z.id}"
+                          ${isStaggered ? 'title="Départ décalé MetCon"' : ""}>
+                        ${toHm(zStart)}${isStaggered ? ' <span style="font-size:9px;opacity:.55;font-family:var(--mono)">+' + (athIdx * stagger) + 'min</span>' : ""}
+                      </td>`;
             }).join("");
 
             const tr = document.createElement("tr");

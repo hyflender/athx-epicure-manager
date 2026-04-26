@@ -17,6 +17,7 @@ const defaultState = {
     startTime: "08:00",
     heatIntervalMinutes: 20,
     athletesPerHeat: 2,
+    metconStaggerMinutes: 2,
   },
   teams: [],
   events: [
